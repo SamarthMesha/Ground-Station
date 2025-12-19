@@ -549,26 +549,12 @@ header::before {
     }
 }
 
-/* ===== MENU GRID - FIXED LAYOUT ===== */
+/* MENU GRID */
 .menu-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: repeat(2, auto);
     gap: 25px;
     flex: 1;
-    grid-auto-flow: row;
-}
-
-/* First row: Performance Analysis & Trajectory Analysis */
-.menu-card:nth-child(1),
-.menu-card:nth-child(2) {
-    grid-row: 1;
-}
-
-/* Second row: GPS Tracking & 3D Visualization */
-.menu-card:nth-child(3),
-.menu-card:nth-child(4) {
-    grid-row: 2;
 }
 
 .menu-card {
@@ -1901,8 +1887,7 @@ header::before {
     }
     
     .menu-grid {
-        grid-template-columns: repeat(2, 1fr);
-        grid-template-rows: repeat(2, auto);
+        grid-template-columns: 1fr;
     }
 }
 
@@ -2005,12 +1990,6 @@ header::before {
     
     .menu-header h2 {
         font-size: 24px;
-    }
-    
-    .menu-grid {
-        grid-template-columns: repeat(2, 1fr);
-        grid-template-rows: repeat(2, auto);
-        gap: 20px;
     }
     
     .menu-card {
@@ -2216,19 +2195,6 @@ header::before {
     
     .stat-value {
         font-size: 12px;
-    }
-    
-    .menu-grid {
-        grid-template-columns: 1fr;
-        grid-template-rows: repeat(4, auto);
-        gap: 15px;
-    }
-    
-    .menu-card:nth-child(1),
-    .menu-card:nth-child(2),
-    .menu-card:nth-child(3),
-    .menu-card:nth-child(4) {
-        grid-row: auto;
     }
     
     .menu-card {
