@@ -16,13 +16,22 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- html2canvas for downloading charts -->
-<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <!-- Google Maps API -->
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB4lE8R4_q3acw6D3Sz1ptUd0N55OY_0xY&callback=initMap" async defer></script>
     <title>Space Club RIT - Ground Station</title>
 </head>
 <body>
+    <!-- Refresh Warning Notification -->
+    <div class="refresh-warning" id="refreshWarning">
+        <div class="ignition-access-title">COUNTDOWN ACTIVE</div>
+        <div class="ignition-notification-message">
+            Countdown sequence is currently active. Page refresh is not allowed during countdown.
+        </div>
+        <div class="ignition-countdown-controls">
+            <button class="ignition-control-btn" id="continueBtn">CONTINUE</button>
+        </div>
+    </div>
+
     <!-- Main Header -->
     <header>
         <div class="header-left">
@@ -54,6 +63,12 @@
         </div>
         
         <div class="csv-buttons-wrapper">
+            <!-- Add Ignition Button here -->
+            <button id="ignition-control-btn" class="csv-btn ignition-btn">
+                <i class="fas fa-fire"></i>
+                <span>Ignition System</span>
+            </button>
+            
             <button id="download-data-csv" class="csv-btn data-csv">
                 <i class="fas fa-file-csv"></i>
                 <span>Data CSV</span>
@@ -63,6 +78,16 @@
                 <span>Graphs CSV</span>
             </button>
         </div>
+    </div>
+
+    <!-- Ignition System Overlay (full-screen) -->
+    <div class="ignition-overlay" id="ignition-overlay">
+        <div class="ignition-container" id="ignition-container">
+            <!-- Login will be loaded here initially -->
+        </div>
+        <button class="close-ignition-btn" id="close-ignition-btn">
+            <i class="fas fa-times"></i>
+        </button>
     </div>
 
     <!-- Hamburger Menu Overlay -->
@@ -158,6 +183,14 @@
             </div>
             
             <div class="menu-footer">
+                <button id="connect-system-btn" class="control-btn connect-btn">
+                    <i class="fas fa-plug"></i>
+                    <span>Connect System</span>
+                </button>
+                <button id="disconnect-system-btn" class="control-btn disconnect-btn" style="display: none;">
+                    <i class="fas fa-plug"></i>
+                    <span>Disconnect System</span>
+                </button>
                 <button id="reset-button" class="control-btn reset-btn">
                     <i class="fas fa-redo"></i>
                     <span>Reset Mission</span>
@@ -167,118 +200,142 @@
     </div>
 
     <main>
-        <!-- Primary Telemetry Section (Always Visible) -->
-        <section id="primary-telemetry" class="card-container">
-            <div class="card-header">
-                <h2><i class="fas fa-satellite-dish"></i> PRIMARY TELEMETRY</h2>
-                <div class="telemetry-status">
-                    <button id="download-telemetry-btn" class="telemetry-download-btn">
-                        <i class="fas fa-download"></i>
-                        <span>Download Telemetry</span>
-                    </button>
+       <!-- Primary Telemetry Section (Always Visible) -->
+<section id="primary-telemetry" class="card-container">
+    <div class="card-header">
+        <h2><i class="fas fa-satellite-dish"></i> PRIMARY TELEMETRY</h2>
+        <div class="telemetry-status">
+            <button id="download-telemetry-btn" class="telemetry-download-btn">
+                <i class="fas fa-download"></i>
+                <span>Download Telemetry</span>
+            </button>
+        </div>
+    </div>
+    <div class="telemetry-grid">
+        <div class="telemetry-card">
+            <div class="telemetry-header">
+                <h3><i class="fas fa-map-marker-alt"></i> POSITION DATA</h3>
+            </div>
+            <div class="telemetry-body">
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Latitude</span>
+                    <span class="telemetry-value scientific-value" id="latitude">--.--° N</span>
+                </div>
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Longitude</span>
+                    <span class="telemetry-value scientific-value" id="longitude">--.--° E</span>
+                </div>
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Altitude</span>
+                    <span class="telemetry-value scientific-value" id="altitude">-- m</span>
+                </div>
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Downrange</span>
+                    <span class="telemetry-value scientific-value" id="downrange">-- m</span>
                 </div>
             </div>
-            <div class="telemetry-grid">
-                <div class="telemetry-card">
-                    <div class="telemetry-header">
-                        <h3><i class="fas fa-map-marker-alt"></i> POSITION DATA</h3>
-                    </div>
-                    <div class="telemetry-body">
-                        <div class="telemetry-row">
-                            <span class="telemetry-label">Latitude</span>
-                            <span class="telemetry-value scientific-value" id="latitude">--.--° N</span>
-                        </div>
-                        <div class="telemetry-row">
-                            <span class="telemetry-label">Longitude</span>
-                            <span class="telemetry-value scientific-value" id="longitude">--.--° E</span>
-                        </div>
-                        <div class="telemetry-row">
-                            <span class="telemetry-label">Altitude</span>
-                            <span class="telemetry-value scientific-value" id="altitude">-- m</span>
-                        </div>
-                        <div class="telemetry-row">
-                            <span class="telemetry-label">Downrange</span>
-                            <span class="telemetry-value scientific-value" id="downrange">-- m</span>
-                        </div>
-                    </div>
-                </div>
+        </div>
 
-                <div class="telemetry-card">
-                    <div class="telemetry-header">
-                        <h3><i class="fas fa-tachometer-alt"></i> ACCELERATION VECTORS</h3>
-                        <div class="telemetry-unit">BODY FRAME</div>
-                    </div>
-                    <div class="telemetry-body">
-                        <div class="telemetry-row">
-                            <span class="telemetry-label">Accel X (Ax)</span>
-                            <span class="telemetry-value scientific-value" id="accel-x">-- G</span>
-                        </div>
-                        <div class="telemetry-row">
-                            <span class="telemetry-label">Accel Y (Ay)</span>
-                            <span class="telemetry-value scientific-value" id="accel-y">-- G</span>
-                        </div>
-                        <div class="telemetry-row">
-                            <span class="telemetry-label">Accel Z (Az)</span>
-                            <span class="telemetry-value scientific-value" id="accel-z">-- G</span>
-                        </div>
-                        <div class="telemetry-row">
-                            <span class="telemetry-label">Total Accel</span>
-                            <span class="telemetry-value scientific-value" id="total-accel">-- G</span>
-                        </div>
-                    </div>
+        <div class="telemetry-card">
+            <div class="telemetry-header">
+                <h3><i class="fas fa-tachometer-alt"></i> ACCELERATION </h3>
+            </div>
+            <div class="telemetry-body">
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Accel X (Ax)</span>
+                    <span class="telemetry-value scientific-value" id="accel-x">-- G</span>
                 </div>
-
-                <div class="telemetry-card">
-                    <div class="telemetry-header">
-                        <h3><i class="fas fa-compass"></i> ATTITUDE & ORIENTATION</h3>
-                        <div class="telemetry-unit">BODY FRAME</div>
-                    </div>
-                    <div class="telemetry-body">
-                        <div class="telemetry-row">
-                            <span class="telemetry-label">Roll (Φ)</span>
-                            <span class="telemetry-value scientific-value" id="roll">--°</span>
-                        </div>
-                        <div class="telemetry-row">
-                            <span class="telemetry-label">Pitch (θ)</span>
-                            <span class="telemetry-value scientific-value" id="pitch">--°</span>
-                        </div>
-                        <div class="telemetry-row">
-                            <span class="telemetry-label">Yaw (Ψ)</span>
-                            <span class="telemetry-value scientific-value" id="yaw">--°</span>
-                        </div>
-                        <div class="telemetry-row">
-                            <span class="telemetry-label">Angular Rate</span>
-                            <span class="telemetry-value scientific-value" id="angular-rate">--°/s</span>
-                        </div>
-                    </div>
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Accel Y (Ay)</span>
+                    <span class="telemetry-value scientific-value" id="accel-y">-- G</span>
                 </div>
-
-                <div class="telemetry-card">
-                    <div class="telemetry-header">
-                        <h3><i class="fas fa-heartbeat"></i> SYSTEM STATUS</h3>
-                        <div class="telemetry-unit">HEALTH</div>
-                    </div>
-                    <div class="telemetry-body">
-                        <div class="telemetry-row">
-                            <span class="telemetry-label">Ignition</span>
-                            <span class="telemetry-value status" id="ignition-status" data-status="critical">NOT IGNITED</span>
-                        </div>
-                        <div class="telemetry-row">
-                            <span class="telemetry-label">Comm Status</span>
-                            <span class="telemetry-value status" id="comm-status" data-status="critical">NO DATA</span>
-                        </div>
-                        <div class="telemetry-row">
-                            <span class="telemetry-label">GPS Satellites</span>
-                            <span class="telemetry-value scientific-value" id="gps-sats">--</span>
-                        </div>
-                        <div class="telemetry-row">
-                            <span class="telemetry-label">Temperature</span>
-                            <span class="telemetry-value scientific-value" id="temperature">-- °C</span>
-                        </div>
-                    </div>
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Accel Z (Az)</span>
+                    <span class="telemetry-value scientific-value" id="accel-z">-- G</span>
+                </div>
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Total Accel</span>
+                    <span class="telemetry-value scientific-value" id="total-accel">-- G</span>
                 </div>
             </div>
-        </section>
+        </div>
+
+        <div class="telemetry-card">
+            <div class="telemetry-header">
+                <h3><i class="fas fa-compass"></i> ORIENTATION</h3>
+            </div>
+            <div class="telemetry-body">
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Roll (Φ)</span>
+                    <span class="telemetry-value scientific-value" id="roll">--°</span>
+                </div>
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Pitch (θ)</span>
+                    <span class="telemetry-value scientific-value" id="pitch">--°</span>
+                </div>
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Yaw (Ψ)</span>
+                    <span class="telemetry-value scientific-value" id="yaw">--°</span>
+                </div>
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Angular Rate</span>
+                    <span class="telemetry-value scientific-value" id="angular-rate">--°/s</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="telemetry-card">
+            <div class="telemetry-header">
+                <h3><i class="fas fa-heartbeat"></i> SYSTEM STATUS</h3>
+            </div>
+            <div class="telemetry-body">
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Ignition</span>
+                    <span class="telemetry-value status" id="ignition-status" data-status="critical">NOT IGNITED</span>
+                </div>
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Comm Status</span>
+                    <span class="telemetry-value status" id="comm-status" data-status="critical">NO DATA</span>
+                </div>
+                <div class="telemetry-row">
+                    <span class="telemetry-label">GPS Satellites</span>
+                    <span class="telemetry-value scientific-value" id="gps-sats">--</span>
+                </div>
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Temperature</span>
+                    <span class="telemetry-value scientific-value" id="temperature">-- °C</span>
+                </div>
+            </div>
+        </div>
+     <!-- New: Thermocouple Data Card -->
+        <div class="telemetry-card">
+            <div class="telemetry-header">
+                <h3><i class="fas fa-thermometer-half"></i> THERMOCOUPLE DATA</h3>
+            </div>
+            <div class="telemetry-body">
+                <div class="telemetry-row">
+                    <span class="telemetry-label">TC1 - Nose Cone</span>
+                    <span class="telemetry-value scientific-value" id="thermocouple-1">-- °C</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- New: Strain Gauge Data Card -->
+        <div class="telemetry-card">
+            <div class="telemetry-header">
+                <h3><i class="fas fa-weight-hanging"></i> STRAIN GAUGE DATA</h3>
+            </div>
+            <div class="telemetry-body">
+                <div class="telemetry-row">
+                    <span class="telemetry-label">SG1 - Nose Joint</span>
+                    <span class="telemetry-value scientific-value" id="strain-gauge-1">-- µε</span>
+                </div>
+            </div>
+        </div>
+    </div>
+        </div>
+    </div>
+</section>
 
         <!-- Performance Analysis Panel -->
         <section id="performance-panel" class="panel-container hidden">
@@ -290,8 +347,6 @@
                 <h2><i class="fas fa-chart-line"></i> PERFORMANCE ANALYSIS</h2>
                 <div class="panel-controls">
                     <div class="chart-metrics">
-                        <i class="fas fa-database"></i>
-                        Data Points: <span id="data-buffer">0</span>
                     </div>
                 </div>
             </div>
@@ -301,8 +356,9 @@
                     <div class="chart-header">
                         <h3><i class="fas fa-running"></i> ACCELERATION VECTORS vs TIME</h3>
                         <div class="chart-controls">
-                            <button class="chart-btn" data-action="export" title="Download Chart">
-                                <i class="fas fa-download"></i>
+                            <button class="chart-btn download-csv-btn" data-chart="acceleration">
+                                <i class="fas fa-file-csv"></i>
+                                CSV
                             </button>
                         </div>
                     </div>
@@ -315,8 +371,9 @@
                     <div class="chart-header">
                         <h3><i class="fas fa-thermometer-half"></i> TEMPERATURE vs ALTITUDE</h3>
                         <div class="chart-controls">
-                            <button class="chart-btn" data-action="export" title="Download Chart">
-                                <i class="fas fa-download"></i>
+                            <button class="chart-btn download-csv-btn" data-chart="temperature">
+                                <i class="fas fa-file-csv"></i>
+                                CSV
                             </button>
                         </div>
                     </div>
@@ -331,8 +388,9 @@
                     <div class="chart-header">
                         <h3><i class="fas fa-mountain"></i> ALTITUDE vs TIME</h3>
                         <div class="chart-controls">
-                            <button class="chart-btn" data-action="export" title="Download Chart">
-                                <i class="fas fa-download"></i>
+                            <button class="chart-btn download-csv-btn" data-chart="altitude">
+                                <i class="fas fa-file-csv"></i>
+                                CSV
                             </button>
                         </div>
                     </div>
@@ -345,8 +403,9 @@
                     <div class="chart-header">
                         <h3><i class="fas fa-weight-hanging"></i> PRESSURE vs ALTITUDE</h3>
                         <div class="chart-controls">
-                            <button class="chart-btn" data-action="export" title="Download Chart">
-                                <i class="fas fa-download"></i>
+                            <button class="chart-btn download-csv-btn" data-chart="pressure">
+                                <i class="fas fa-file-csv"></i>
+                                CSV
                             </button>
                         </div>
                     </div>
@@ -390,9 +449,9 @@
                             </div>
                         </div>
                         <div class="trajectory-download">
-                            <button class="download-trajectory-btn" id="download-trajectory">
-                                <i class="fas fa-download"></i>
-                                Download Chart
+                            <button class="download-trajectory-btn" id="download-trajectory-csv">
+                                <i class="fas fa-file-csv"></i>
+                                Download CSV
                             </button>
                         </div>
                     </div>
@@ -548,47 +607,143 @@
         <section id="data-log-section" class="card-container">
             <div class="card-header">
                 <h2><i class="fas fa-clipboard-list"></i> TELEMETRY DATA LOG</h2>
-                <div class="log-controls-bottom">
-                    <div class="toggle-switch">
-                        <input type="checkbox" id="auto-scroll" checked>
-                        <span class="toggle-slider"></span>
-                        <span class="toggle-label">Auto-scroll</span>
-                    </div>
-                    <div class="log-filter">
-                        <label for="log-filter"><i class="fas fa-filter"></i> Filter:</label>
-                        <select id="log-filter">
-                            <option value="all">All</option>
-                            <option value="telemetry">Telemetry</option>
-                            <option value="gps">GPS</option>
-                            <option value="system">System</option>
-                            <option value="warning">Warnings</option>
-                            <option value="error">Errors</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-            <div class="log-controls">
-                <button id="export-log" class="log-btn">
-                    <i class="fas fa-download"></i>
-                    <span class="btn-text">Export Log</span>
-                </button>
-                <button id="pause-log" class="log-btn">
-                    <i class="fas fa-pause"></i>
-                    <span class="btn-text">Pause Stream</span>
-                </button>
-                <button id="clear-log" class="log-btn">
-                    <i class="fas fa-trash"></i>
-                    <span class="btn-text">Clear Log</span>
-                </button>
             </div>
             <div class="log-container" id="telemetry-log">
                 <div class="log-entry">
                     <span class="log-time">--:--:--</span>
-                    <span class="log-data">[SYSTEM] Mission Control initialized and waiting for telemetry data</span>
+                    <span class="log-data">[SYSTEM] Mission Control initialized. Waiting for sensor initialization...</span>
                 </div>
             </div>
         </section>
     </main>
+    
+    <!-- Firebase SDK for Ignition System -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
+        import { getDatabase } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { logEvent } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
+
+        // Your web app's Firebase configuration for Ignition System
+        const firebaseIgnitionConfig = {
+            apiKey: "AIzaSyDuju4i1WijMZQIO2fCsC0dgFgrDsu_E8Q",
+            authDomain: "eklavya-ignition-system.firebaseapp.com",
+            databaseURL: "https://eklavya-ignition-system-default-rtdb.firebaseio.com",
+            projectId: "eklavya-ignition-system",
+            storageBucket: "eklavya-ignition-system.firebasestorage.app",
+            messagingSenderId: "204217864798",
+            appId: "1:204217864798:web:db64b45044858b70265acf",
+            measurementId: "G-2JYQY7F2XJ"
+        };
+
+        // Initialize Firebase for Ignition
+        const ignitionApp = initializeApp(firebaseIgnitionConfig, "ignitionApp");
+        const ignitionAnalytics = getAnalytics(ignitionApp);
+        const ignitionDatabase = getDatabase(ignitionApp);
+        
+        // Make Ignition Firebase available globally
+        window.firebaseIgnitionApp = ignitionApp;
+        window.firebaseIgnitionAnalytics = ignitionAnalytics;
+        window.firebaseIgnitionDatabase = ignitionDatabase;
+        window.firebaseIgnitionLogEvent = logEvent;
+        
+        console.log("Firebase Ignition System initialized successfully");
+    </script>
+
+    <!-- Firebase SDK for Telemetry Data -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set, push, onValue, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        // Your web app's Firebase configuration for Telemetry Data
+        const firebaseTelemetryConfig = {
+            apiKey: "AIzaSyAjHxtN7YmwNXicU4qpCIgtZhgksfpnd2E",
+            authDomain: "ignition-control-system.firebaseapp.com",
+            databaseURL: "https://ignition-control-system-default-rtdb.firebaseio.com",
+            projectId: "ignition-control-system",
+            storageBucket: "ignition-control-system.firebasestorage.app",
+            messagingSenderId: "179028944207",
+            appId: "1:179028944207:web:09c9511a3dd202d0f2113a",
+            measurementId: "G-HG0LFJZ43M"
+        };
+
+        // Initialize Firebase for Telemetry
+        const telemetryApp = initializeApp(firebaseTelemetryConfig, "telemetryApp");
+        const telemetryDatabase = getDatabase(telemetryApp);
+        
+        // Make Telemetry Firebase available globally
+        window.firebaseTelemetryApp = telemetryApp;
+        window.firebaseTelemetryDatabase = telemetryDatabase;
+        
+        console.log("Firebase Telemetry System initialized successfully");
+        
+        // Function to save telemetry data to Firebase
+        window.saveTelemetryToFirebase = async function(telemetryData) {
+            try {
+                const telemetryRef = ref(telemetryDatabase, 'telemetry/latest');
+                await set(telemetryRef, telemetryData);
+                
+                // Also push to history
+                const historyRef = ref(telemetryDatabase, 'telemetry/history');
+                await push(historyRef, {
+                    ...telemetryData,
+                    timestamp: Date.now()
+                });
+                
+                console.log("Telemetry saved to Firebase:", telemetryData);
+                return true;
+            } catch (error) {
+                console.error("Error saving telemetry to Firebase:", error);
+                return false;
+            }
+        };
+        
+        // Function to get live telemetry from Firebase
+        window.getLiveTelemetryFromFirebase = function(callback) {
+            try {
+                const telemetryRef = ref(telemetryDatabase, 'telemetry/latest');
+                onValue(telemetryRef, (snapshot) => {
+                    const data = snapshot.val();
+                    if (data) {
+                        callback(data);
+                    }
+                });
+                return true;
+            } catch (error) {
+                console.error("Error getting live telemetry:", error);
+                return false;
+            }
+        };
+        
+        // Function to get telemetry history from Firebase
+        window.getTelemetryHistoryFromFirebase = async function(limit = 100) {
+            try {
+                const historyRef = ref(telemetryDatabase, 'telemetry/history');
+                const snapshot = await get(historyRef);
+                const history = [];
+                
+                if (snapshot.exists()) {
+                    snapshot.forEach((childSnapshot) => {
+                        history.push({
+                            id: childSnapshot.key,
+                            ...childSnapshot.val()
+                        });
+                    });
+                }
+                
+                // Sort by timestamp and limit results
+                return history
+                    .sort((a, b) => b.timestamp - a.timestamp)
+                    .slice(0, limit);
+            } catch (error) {
+                console.error("Error getting telemetry history:", error);
+                return [];
+            }
+        };
+    </script>
+
     <script src="script.js"></script>
 </body>
 </html>
