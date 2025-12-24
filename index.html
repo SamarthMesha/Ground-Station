@@ -3,212 +3,621 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ground Station - Sounding Rocket Ignition Control</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="style.css">
+    <!-- Add Orbitron font for futuristic look -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Add Inter font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Add JetBrains Mono font -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Maps API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB4lE8R4_q3acw6D3Sz1ptUd0N55OY_0xY&callback=initMap" async defer></script>
+    <title>Space Club RIT - Ground Station</title>
 </head>
 <body>
     <!-- Refresh Warning Notification -->
     <div class="refresh-warning" id="refreshWarning">
-        <div class="access-title">COUNTDOWN ACTIVE</div>
-        <div class="access-message">
+        <div class="ignition-access-title">COUNTDOWN ACTIVE</div>
+        <div class="ignition-notification-message">
             Countdown sequence is currently active. Page refresh is not allowed during countdown.
         </div>
-        <div class="countdown-controls">
-            <button class="control-btn" id="continueBtn">CONTINUE</button>
+        <div class="ignition-countdown-controls">
+            <button class="ignition-control-btn" id="continueBtn">CONTINUE</button>
         </div>
     </div>
 
-    <!-- Login Page -->
-    <div class="login-container" id="loginPage">
-        <div class="system-title">SPACE CLUB IGNITION CONTROL SYSTEM</div>
-        <div class="login-box">
-            <div class="logo">
-                SOUNDING ROCKET <br>IGNITION CONTROL
-            </div>
-            <h2>ACCESS CONTROL</h2>
-            <div class="form-group">
-                <label for="username">USERNAME:</label>
-                <input type="text" id="username" placeholder="Enter username">
-            </div>
-            <div class="form-group">
-                <label for="password">PASSWORD:</label>
-                <div class="password-wrapper">
-                    <input type="password" id="password" placeholder="Enter password">
-                    <button type="button" class="toggle-password" id="togglePassword">👁️</button>
+    <!-- Main Header -->
+    <header>
+        <div class="header-left">
+            <div class="logo-wrapper">
+                <img src="https://media.licdn.com/dms/image/D560BAQHuKpEmVJCp3A/company-logo_200_200/0/1698327707879/space_club_rit_logo?e=2147483647&v=beta&t=LB8J_uFC7qTSwsu1Y5DPjBv0CYfzJ2gK7uuhh8n3SdI" 
+                     alt="Space Club RIT Logo" id="club-logo">
+                <div class="club-name">
+                    <h1>SPACE CLUB RIT</h1>
                 </div>
             </div>
-            <div class="button-group">
-                <button class="btn btn-reset" id="resetBtn">RESET</button>
-                <button class="btn btn-login" id="loginBtn">LOGIN</button>
+        </div>
+        
+        <!-- EKLAVYA centered in header -->
+        <div class="header-center">
+            <div class="eklavya-main">EKLAVYA</div>
+        </div>
+        
+        <!-- Empty right side for balance -->
+        <div class="header-right"></div>
+    </header>
+
+    <!-- Menu Bar (Below Header) -->
+    <div class="menu-bar">
+        <div class="menu-toggle-wrapper">
+            <div class="menu-toggle" id="menu-toggle">
+                <i class="fas fa-bars"></i>
+                <span class="menu-text">MISSION CONTROL MENU</span>
             </div>
+        </div>
+        
+        <div class="csv-buttons-wrapper">
+            <!-- Add Ignition Button here -->
+            <button id="ignition-system-btn" class="csv-btn ignition-btn">
+                <i class="fas fa-fire"></i>
+                <span>Ignition System</span>
+            </button>
+            
+            <button id="download-data-csv" class="csv-btn data-csv">
+                <i class="fas fa-file-csv"></i>
+                <span>Data CSV</span>
+            </button>
+            <button id="download-graphs-csv" class="csv-btn graph-csv">
+                <i class="fas fa-chart-bar"></i>
+                <span>Graphs CSV</span>
+            </button>
         </div>
     </div>
 
-    <!-- Access Granted Notification -->
-    <div class="access-notification" id="accessNotification">
-        <div class="access-icon">✓</div>
-        <div class="access-title">ACCESS GRANTED</div>
-        <div class="access-message">
-            Authentication successful. You now have control system access.
+    <!-- Ignition System Overlay (full-screen) -->
+    <div class="ignition-overlay" id="ignition-overlay">
+        <div class="ignition-container" id="ignition-container">
+            <!-- Login will be loaded here initially -->
         </div>
-        <div class="access-details">
-            User: 2315046<br>
-            Clearance: Level 5<br>
-            Time: <span id="accessTime"></span>
-        </div>
+        <button class="close-ignition-btn" id="close-ignition-btn">
+            <i class="fas fa-times"></i>
+        </button>
     </div>
 
-    <!-- Confirmation Notification -->
-    <div class="confirmation-notification" id="confirmationNotification">
-        <div class="access-title">CONFIRM IGNITION SEQUENCE</div>
-        <div class="access-message">
-            All pre-ignition checks are complete. Ready to initiate countdown sequence.
+    <!-- Hamburger Menu Overlay -->
+    <div class="menu-overlay" id="menu-overlay">
+        <div class="menu-close" id="menu-close">
+            <i class="fas fa-times"></i>
         </div>
-        <div class="countdown-controls">
-            <button class="control-btn" id="confirmBtn">CONFIRM</button>
-            <button class="control-btn warning" id="cancelConfirmBtn">CANCEL</button>
-        </div>
-    </div>
-
-    <!-- Ignition Notification -->
-    <div class="ignition-notification" id="ignitionNotification">
-        <div class="access-title">IGNITION SEQUENCE ACTIVATED</div>
-        <div class="access-message" id="ignitionMessage">
-            Countdown complete. Rocket ignition initiated.
-        </div>
-    </div>
-
-    <!-- Main Dashboard -->
-    <div class="dashboard" id="dashboard">
-        <div class="header">
-            <div class="system-header">
-                <div class="system-name">SPACE CLUB IGNITION CONTROL SYSTEM</div>
-                <div class="system-version">v2.3.15</div>
-            </div>
-            <div class="status-bar">
-                <div class="status-item">
-                    <div class="status-indicator online"></div>
-                    <span>STATUS: ONLINE</span>
-                </div>
-                <div class="status-item">
-                    <div class="status-indicator online"></div>
-                    <span>LINK: ESTABLISHED</span>
-                </div>
-                <div class="status-item">
-                    <span>USER: 2315046</span>
+        <div class="menu-content">
+            <div class="menu-header">
+                <h2>MISSION CONTROL PANELS</h2>
+                <div class="mission-status">
+                    <span class="status-dot active"></span>
+                    <span class="status-text">MISSION ACTIVE</span>
                 </div>
             </div>
-        </div>
-
-        <!-- NEW LAYOUT: Left and Right Columns -->
-        <div class="main-content">
-            <!-- Left Column -->
-            <div class="left-column">
-                <!-- Sequence Panel -->
-                <div class="panel" id="sequencePanel">
-                    <h3 class="panel-title">IGNITION SEQUENCE</h3>
-                    <div class="sequence-item">
-                        <div class="sequence-checkbox" id="check1"></div>
-                        <span>PRE-IGNITION CHECK</span>
+            
+            <div class="menu-grid">
+                <!-- Performance Analysis -->
+                <div class="menu-card" data-panel="performance">
+                    <div class="menu-card-icon">
+                        <i class="fas fa-chart-line"></i>
                     </div>
-                    <div class="sequence-item">
-                        <div class="sequence-checkbox" id="check2"></div>
-                        <span>ARM COMMAND</span>
+                    <div class="menu-card-content">
+                        <h3>PERFORMANCE ANALYSIS</h3>
+                        <p>Real-time charts and data visualization</p>
+                        <div class="menu-card-subitems">
+                            <span class="subitem">Acceleration Vectors vs Time</span>
+                            <span class="subitem">Temperature vs Altitude</span>
+                            <span class="subitem">Altitude vs Time</span>
+                            <span class="subitem">Pressure vs Altitude</span>
+                        </div>
                     </div>
-                    <div class="sequence-item">
-                        <div class="sequence-checkbox disabled" id="check3"></div>
-                        <span>FIRE ENABLE</span>
+                    <div class="menu-card-arrow">
+                        <i class="fas fa-chevron-right"></i>
                     </div>
-                    <button class="sequence-btn" id="initiateBtn">INITIATE SEQUENCE</button>
                 </div>
-
-                <!-- Event Log Panel -->
-                <div class="panel">
-                    <h3 class="panel-title">EVENT LOG</h3>
-                    <div class="event-log" id="eventLog">
-                        <div class="log-entry">
-                            <span class="log-time">12:05:32</span>
-                            <span>System initialized</span>
+                
+                <!-- Trajectory Analysis -->
+                <div class="menu-card" data-panel="trajectory">
+                    <div class="menu-card-icon">
+                        <i class="fas fa-project-diagram"></i>
+                    </div>
+                    <div class="menu-card-content">
+                        <h3>TRAJECTORY ANALYSIS</h3>
+                        <p>Flight path and trajectory visualization</p>
+                        <div class="menu-card-subitems">
+                            <span class="subitem">Altitude vs Range</span>
+                            <span class="subitem">Trajectory Parameters</span>
+                            <span class="subitem">Max Altitude Tracking</span>
                         </div>
-                        <div class="log-entry">
-                            <span class="log-time">12:04:18</span>
-                            <span>Ground link established</span>
+                    </div>
+                    <div class="menu-card-arrow">
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+                
+                <!-- Live Google Earth Tracking -->
+                <div class="menu-card" data-panel="tracking">
+                    <div class="menu-card-icon">
+                        <i class="fas fa-globe-americas"></i>
+                    </div>
+                    <div class="menu-card-content">
+                        <h3>LIVE GOOGLE EARTH TRACKING</h3>
+                        <p>Real-time GPS and mapping</p>
+                        <div class="menu-card-subitems">
+                            <span class="subitem">Live Flight Tracking</span>
+                            <span class="subitem">Position & Navigation</span>
                         </div>
-                        <div class="log-entry">
-                            <span class="log-time">12:03:45</span>
-                            <span>User 2315046 authenticated</span>
+                    </div>
+                    <div class="menu-card-arrow">
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+                
+                <!-- 3D Rocket & Flight Dynamics -->
+                <div class="menu-card" data-panel="visualization">
+                    <div class="menu-card-icon">
+                        <i class="fas fa-rocket"></i>
+                    </div>
+                    <div class="menu-card-content">
+                        <h3>3D ROCKET & FLIGHT DYNAMICS</h3>
+                        <p>Advanced 3D visualization</p>
+                        <div class="menu-card-subitems">
+                            <span class="subitem">3D Rocket Gyration</span>
+                            <span class="subitem">Flight Dynamics Visualization</span>
+                            <span class="subitem">Real-time Animation</span>
                         </div>
+                    </div>
+                    <div class="menu-card-arrow">
+                        <i class="fas fa-chevron-right"></i>
                     </div>
                 </div>
             </div>
-
-            <!-- Right Column -->
-            <div class="right-column">
-                <!-- Countdown Panel (hidden by default) -->
-                <div class="panel countdown-panel" id="countdownPanel">
-                    <h3 class="panel-title">COUNTDOWN SEQUENCE</h3>
-                    <div class="countdown-display" id="countdownDisplay">00:00:00</div>
-                    <div class="countdown-input">
-                        <div>
-                            <label>Hours</label>
-                            <input type="number" id="hoursInput" min="0" max="23" value="0">
-                        </div>
-                        <div>
-                            <label>Minutes</label>
-                            <input type="number" id="minutesInput" min="0" max="59" value="5">
-                        </div>
-                        <div>
-                            <label>Seconds</label>
-                            <input type="number" id="secondsInput" min="0" max="59" value="0">
-                        </div>
-                    </div>
-                    <div class="countdown-controls">
-                        <button class="control-btn" id="startCountdownBtn">START COUNTDOWN</button>
-                        <button class="control-btn warning" id="cancelCountdownBtn">CANCEL</button>
-                    </div>
-                </div>
-
-                <!-- Mission Complete Panel (hidden by default) -->
-                <div class="panel mission-complete-panel" id="missionCompletePanel">
-                    <div class="mission-complete-icon">🚀</div>
-                    <div class="mission-complete-title">MISSION COMPLETE</div>
-                    <div class="mission-complete-message">
-                        Rocket ignition sequence successfully executed. All systems nominal.
-                    </div>
-                    <div class="mission-stats">
-                        <div class="stat-item">
-                            <div class="stat-value" id="launchTime">00:05:00</div>
-                            <div class="stat-label">LAUNCH TIME</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value" id="completionTime">12:10:45</div>
-                            <div class="stat-label">COMPLETION TIME</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value">100%</div>
-                            <div class="stat-label">SYSTEM STATUS</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value">NOMINAL</div>
-                            <div class="stat-label">FLIGHT PATH</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Quick Controls Panel -->
-                <div class="panel quick-controls-panel">
-                    <h3 class="panel-title">QUICK CONTROLS</h3>
-                    <div class="controls">
-                        <button class="control-btn warning" id="abortBtn">ABORT</button>
-                        <button class="control-btn" id="pauseBtn">PAUSE</button>
-                        <button class="control-btn" id="overrideBtn">OVERRIDE</button>
-                    </div>
-                </div>
+            
+            <div class="menu-footer">
+                <button id="connect-system-btn" class="control-btn connect-btn">
+                    <i class="fas fa-plug"></i>
+                    <span>Connect System</span>
+                </button>
+                <button id="disconnect-system-btn" class="control-btn disconnect-btn" style="display: none;">
+                    <i class="fas fa-plug"></i>
+                    <span>Disconnect System</span>
+                </button>
+                <button id="reset-button" class="control-btn reset-btn">
+                    <i class="fas fa-redo"></i>
+                    <span>Reset Mission</span>
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- Firebase SDK -->
+    <main>
+       <!-- Primary Telemetry Section (Always Visible) -->
+<section id="primary-telemetry" class="card-container">
+    <div class="card-header">
+        <h2><i class="fas fa-satellite-dish"></i> PRIMARY TELEMETRY</h2>
+        <div class="telemetry-status">
+            <button id="download-telemetry-btn" class="telemetry-download-btn">
+                <i class="fas fa-download"></i>
+                <span>Download Telemetry</span>
+            </button>
+        </div>
+    </div>
+    <div class="telemetry-grid">
+        <div class="telemetry-card">
+            <div class="telemetry-header">
+                <h3><i class="fas fa-map-marker-alt"></i> POSITION DATA</h3>
+            </div>
+            <div class="telemetry-body">
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Latitude</span>
+                    <span class="telemetry-value scientific-value" id="latitude">--.--° N</span>
+                </div>
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Longitude</span>
+                    <span class="telemetry-value scientific-value" id="longitude">--.--° E</span>
+                </div>
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Altitude</span>
+                    <span class="telemetry-value scientific-value" id="altitude">-- m</span>
+                </div>
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Downrange</span>
+                    <span class="telemetry-value scientific-value" id="downrange">-- m</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="telemetry-card">
+            <div class="telemetry-header">
+                <h3><i class="fas fa-tachometer-alt"></i> ACCELERATION </h3>
+            </div>
+            <div class="telemetry-body">
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Accel X (Ax)</span>
+                    <span class="telemetry-value scientific-value" id="accel-x">-- G</span>
+                </div>
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Accel Y (Ay)</span>
+                    <span class="telemetry-value scientific-value" id="accel-y">-- G</span>
+                </div>
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Accel Z (Az)</span>
+                    <span class="telemetry-value scientific-value" id="accel-z">-- G</span>
+                </div>
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Total Accel</span>
+                    <span class="telemetry-value scientific-value" id="total-accel">-- G</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="telemetry-card">
+            <div class="telemetry-header">
+                <h3><i class="fas fa-compass"></i> ORIENTATION</h3>
+            </div>
+            <div class="telemetry-body">
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Roll (Φ)</span>
+                    <span class="telemetry-value scientific-value" id="roll">--°</span>
+                </div>
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Pitch (θ)</span>
+                    <span class="telemetry-value scientific-value" id="pitch">--°</span>
+                </div>
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Yaw (Ψ)</span>
+                    <span class="telemetry-value scientific-value" id="yaw">--°</span>
+                </div>
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Angular Rate</span>
+                    <span class="telemetry-value scientific-value" id="angular-rate">--°/s</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="telemetry-card">
+            <div class="telemetry-header">
+                <h3><i class="fas fa-heartbeat"></i> SYSTEM STATUS</h3>
+            </div>
+            <div class="telemetry-body">
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Ignition</span>
+                    <span class="telemetry-value status" id="ignition-status" data-status="critical">NOT IGNITED</span>
+                </div>
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Comm Status</span>
+                    <span class="telemetry-value status" id="comm-status" data-status="critical">NO DATA</span>
+                </div>
+                <div class="telemetry-row">
+                    <span class="telemetry-label">GPS Satellites</span>
+                    <span class="telemetry-value scientific-value" id="gps-sats">--</span>
+                </div>
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Temperature</span>
+                    <span class="telemetry-value scientific-value" id="temperature">-- °C</span>
+                </div>
+            </div>
+        </div>
+     <!-- New: Thermocouple Data Card -->
+        <div class="telemetry-card">
+            <div class="telemetry-header">
+                <h3><i class="fas fa-thermometer-half"></i> THERMOCOUPLE DATA</h3>
+            </div>
+            <div class="telemetry-body">
+                <div class="telemetry-row">
+                    <span class="telemetry-label">TC1 - Nose Cone</span>
+                    <span class="telemetry-value scientific-value" id="thermocouple-1">-- °C</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- New: Strain Gauge Data Card -->
+        <div class="telemetry-card">
+            <div class="telemetry-header">
+                <h3><i class="fas fa-weight-hanging"></i> STRAIN GAUGE DATA</h3>
+            </div>
+            <div class="telemetry-body">
+                <div class="telemetry-row">
+                    <span class="telemetry-label">SG1 - Nose Joint</span>
+                    <span class="telemetry-value scientific-value" id="strain-gauge-1">-- µε</span>
+                </div>
+            </div>
+        </div>
+    </div>
+        </div>
+    </div>
+</section>
+
+        <!-- Performance Analysis Panel -->
+        <section id="performance-panel" class="panel-container hidden">
+            <div class="panel-header">
+                <button class="panel-back-btn" data-panel="performance">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Back to Menu</span>
+                </button>
+                <h2><i class="fas fa-chart-line"></i> PERFORMANCE ANALYSIS</h2>
+                <div class="panel-controls">
+                    <div class="chart-metrics">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chart-row">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3><i class="fas fa-running"></i> ACCELERATION VECTORS vs TIME</h3>
+                        <div class="chart-controls">
+                            <button class="chart-btn download-csv-btn" data-chart="acceleration">
+                                <i class="fas fa-file-csv"></i>
+                                CSV
+                            </button>
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="accelerationChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3><i class="fas fa-thermometer-half"></i> TEMPERATURE vs ALTITUDE</h3>
+                        <div class="chart-controls">
+                            <button class="chart-btn download-csv-btn" data-chart="temperature">
+                                <i class="fas fa-file-csv"></i>
+                                CSV
+                            </button>
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="temperatureChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chart-row">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3><i class="fas fa-mountain"></i> ALTITUDE vs TIME</h3>
+                        <div class="chart-controls">
+                            <button class="chart-btn download-csv-btn" data-chart="altitude">
+                                <i class="fas fa-file-csv"></i>
+                                CSV
+                            </button>
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="altitudeChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3><i class="fas fa-weight-hanging"></i> PRESSURE vs ALTITUDE</h3>
+                        <div class="chart-controls">
+                            <button class="chart-btn download-csv-btn" data-chart="pressure">
+                                <i class="fas fa-file-csv"></i>
+                                CSV
+                            </button>
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="pressureChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Trajectory Analysis Panel -->
+        <section id="trajectory-panel" class="panel-container hidden">
+            <div class="panel-header">
+                <button class="panel-back-btn" data-panel="trajectory">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Back to Menu</span>
+                </button>
+                <h2><i class="fas fa-project-diagram"></i> TRAJECTORY ANALYSIS</h2>
+                <div class="panel-controls">
+                    <div class="trajectory-metrics">
+                        <div class="metric-item">
+                            <i class="fas fa-arrow-up"></i>
+                            Max Altitude: <span id="max-altitude">-- m</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="trajectory-container">
+                <div class="trajectory-chart">
+                    <div class="trajectory-header">
+                        <h3><i class="fas fa-chart-area"></i> ALTITUDE vs RANGE</h3>
+                        <div class="trajectory-stats">
+                            <div class="stat">
+                                <i class="fas fa-mountain"></i>
+                                Current Altitude: <span id="current-altitude">-- m</span>
+                            </div>
+                            <div class="stat">
+                                <i class="fas fa-route"></i>
+                                Downrange: <span id="downrange-distance">-- km</span>
+                            </div>
+                        </div>
+                        <div class="trajectory-download">
+                            <button class="download-trajectory-btn" id="download-trajectory-csv">
+                                <i class="fas fa-file-csv"></i>
+                                Download CSV
+                            </button>
+                        </div>
+                    </div>
+                    <div class="trajectory-wrapper">
+                        <canvas id="trajectoryChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="trajectory-data">
+                    <div class="data-box">
+                        <h4><i class="fas fa-sliders-h"></i> TRAJECTORY PARAMETERS</h4>
+                        <div class="trajectory-param">
+                            <span><i class="fas fa-mountain"></i> Current Altitude</span>
+                            <span id="traj-current-altitude">-- m</span>
+                        </div>
+                        <div class="trajectory-param">
+                            <span><i class="fas fa-arrow-down"></i> Descent Altitude</span>
+                            <span id="descent-altitude">-- m</span>
+                        </div>
+                        <div class="trajectory-param">
+                            <span><i class="fas fa-fire"></i> Ignition Time</span>
+                            <span id="ignition-time">--:--</span>
+                        </div>
+                        <div class="trajectory-param">
+                            <span><i class="fas fa-wind"></i> Max Q Altitude</span>
+                            <span id="maxq-alt">-- m</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Live Google Earth Tracking Panel -->
+        <section id="tracking-panel" class="panel-container hidden">
+            <div class="panel-header">
+                <button class="panel-back-btn" data-panel="tracking">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Back to Menu</span>
+                </button>
+                <h2><i class="fas fa-globe-americas"></i> LIVE GOOGLE EARTH TRACKING</h2>
+                <div class="panel-controls">
+                    <div class="gps-status">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tracking-container">
+                <div class="map-container">
+                    <div class="map-header">
+                        <h3><i class="fas fa-map-marked-alt"></i> LIVE FLIGHT TRACKING</h3>
+                        <div class="map-controls">
+                            <button class="map-btn" id="toggle-satellite">
+                                <i class="fas fa-satellite"></i>
+                                <span>Satellite</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="map-wrapper">
+                        <div id="google-map"></div>
+                        <div class="map-overlay">
+                            <div class="map-coordinates">
+                                <div class="coord-item">
+                                    <span class="coord-label"><i class="fas fa-map-pin"></i> Lat:</span>
+                                    <span class="coord-value" id="map-lat">--.--°</span>
+                                </div>
+                                <div class="coord-item">
+                                    <span class="coord-label"><i class="fas fa-map-pin"></i> Lon:</span>
+                                    <span class="coord-value" id="map-lon">--.--°</span>
+                                </div>
+                                <div class="coord-item">
+                                    <span class="coord-label"><i class="fas fa-mountain"></i> Alt:</span>
+                                    <span class="coord-value" id="map-alt">-- m</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tracking-data">
+                    <div class="tracking-card">
+                        <h4><i class="fas fa-satellite"></i> POSITION & NAVIGATION</h4>
+                        <div class="tracking-grid">
+                            <div class="tracking-item">
+                                <div class="tracking-label">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <span>Latitude</span>
+                                </div>
+                                <div class="tracking-value" id="gps-latitude">--.--° N</div>
+                            </div>
+                            <div class="tracking-item">
+                                <div class="tracking-label">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <span>Longitude</span>
+                                </div>
+                                <div class="tracking-value" id="gps-longitude">--.--° E</div>
+                            </div>
+                            <div class="tracking-item">
+                                <div class="tracking-label">
+                                    <i class="fas fa-mountain"></i>
+                                    <span>Altitude</span>
+                                </div>
+                                <div class="tracking-value" id="gps-altitude">-- m</div>
+                            </div>
+                            <div class="tracking-item">
+                                <div class="tracking-label">
+                                    <i class="fas fa-satellite"></i>
+                                    <span>GPS</span>
+                                </div>
+                                <div class="tracking-value" id="gps-satellites">--</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3D Rocket & Flight Dynamics Panel -->
+        <section id="visualization-panel" class="panel-container hidden">
+            <div class="panel-header">
+                <button class="panel-back-btn" data-panel="visualization">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Back to Menu</span>
+                </button>
+                <h2><i class="fas fa-rocket"></i> 3D ROCKET & FLIGHT DYNAMICS</h2>
+                <div class="panel-controls">
+                </div>
+            </div>
+            
+            <div class="visualization-container">
+                <div class="viz-single-section">
+                    <!-- 3D Rocket Visualization -->
+                    <div class="rocket-visualization">
+                        <div class="viz-card-header">
+                            <h3><i class="fas fa-rocket"></i> 3D ROCKET GYRATION & ANIMATION</h3>
+                        </div>
+                        <div class="rocket-container">
+                            <div id="rocket3d"></div>
+                            <div class="rocket-overlay">
+                                <div class="rocket-stats">
+                                    <div class="stat-item">
+                                        <span class="stat-label"><i class="fas fa-compass"></i> Orientation:</span>
+                                        <span class="stat-value" id="rocket-orientation">Stable</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Data Log Section (Always Visible) -->
+        <section id="data-log-section" class="card-container">
+            <div class="card-header">
+                <h2><i class="fas fa-clipboard-list"></i> TELEMETRY DATA LOG</h2>
+            </div>
+            <div class="log-container" id="telemetry-log">
+                <div class="log-entry">
+                    <span class="log-time">--:--:--</span>
+                    <span class="log-data">[SYSTEM] Mission Control initialized. Waiting for sensor initialization...</span>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <!-- Firebase SDK for Ignition System -->
     <script type="module">
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -216,8 +625,8 @@
         import { getDatabase } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
         import { logEvent } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
 
-        // Your web app's Firebase configuration
-        const firebaseConfig = {
+        // Your web app's Firebase configuration for Ignition System
+        const firebaseIgnitionConfig = {
             apiKey: "AIzaSyDuju4i1WijMZQIO2fCsC0dgFgrDsu_E8Q",
             authDomain: "eklavya-ignition-system.firebaseapp.com",
             databaseURL: "https://eklavya-ignition-system-default-rtdb.firebaseio.com",
@@ -228,498 +637,113 @@
             measurementId: "G-2JYQY7F2XJ"
         };
 
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const analytics = getAnalytics(app);
-        const database = getDatabase(app);
+        // Initialize Firebase for Ignition
+        const ignitionApp = initializeApp(firebaseIgnitionConfig, "ignitionApp");
+        const ignitionAnalytics = getAnalytics(ignitionApp);
+        const ignitionDatabase = getDatabase(ignitionApp);
         
-        // Make Firebase available globally
-        window.firebaseApp = app;
-        window.firebaseAnalytics = analytics;
-        window.firebaseDatabase = database;
-        window.firebaseLogEvent = logEvent;
+        // Make Ignition Firebase available globally
+        window.firebaseIgnitionApp = ignitionApp;
+        window.firebaseIgnitionAnalytics = ignitionAnalytics;
+        window.firebaseIgnitionDatabase = ignitionDatabase;
+        window.firebaseIgnitionLogEvent = logEvent;
         
-        console.log("Firebase initialized successfully");
+        console.log("Firebase Ignition System initialized successfully");
     </script>
 
-    <!-- Your main application script -->
-    <script>
-        // Global variables
-        let countdownInterval;
-        let totalCountdownSeconds = 0;
-        let countdownActive = false;
-        let countdownPaused = false;
-        let remainingSeconds = 0;
+    <!-- Firebase SDK for Telemetry Data -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set, push, onValue, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        // Firebase reference
-        let database;
-        let analytics;
-        let logEventFunction;
+        // Your web app's Firebase configuration for Telemetry Data
+        const firebaseTelemetryConfig = {
+            apiKey: "AIzaSyAjHxtN7YmwNXicU4qpCIgtZhgksfpnd2E",
+            authDomain: "ignition-control-system.firebaseapp.com",
+            databaseURL: "https://ignition-control-system-default-rtdb.firebaseio.com",
+            projectId: "ignition-control-system",
+            storageBucket: "ignition-control-system.firebasestorage.app",
+            messagingSenderId: "179028944207",
+            appId: "1:179028944207:web:09c9511a3dd202d0f2113a",
+            measurementId: "G-HG0LFJZ43M"
+        };
 
-        // Initialize when page loads
-        window.addEventListener('load', function() {
-            // Initialize Firebase if available
-            if (window.firebaseDatabase) {
-                database = window.firebaseDatabase;
-                analytics = window.firebaseAnalytics;
-                logEventFunction = window.firebaseLogEvent;
-                console.log("Firebase initialized in script.js");
-            }
-            
-            // Check if there's a countdown in progress in localStorage
-            const savedCountdown = localStorage.getItem('countdownActive');
-            if (savedCountdown === 'true') {
-                const savedTime = localStorage.getItem('remainingSeconds');
-                if (savedTime) {
-                    remainingSeconds = parseInt(savedTime);
-                    if (remainingSeconds > 0) {
-                        countdownActive = true;
-                        resumeCountdown();
-                    }
-                }
-            }
-        });
-
-        // Prevent page refresh during countdown
-        window.addEventListener('beforeunload', function(e) {
-            if (countdownActive && !countdownPaused) {
-                e.preventDefault();
-                e.returnValue = '';
-                document.getElementById('refreshWarning').classList.add('active');
-                return '';
-            }
-        });
-
-        // Continue button for refresh warning
-        document.getElementById('continueBtn').addEventListener('click', function() {
-            document.getElementById('refreshWarning').classList.remove('active');
-        });
-
-        // Toggle password visibility
-        document.getElementById('togglePassword').addEventListener('click', function() {
-            const passwordInput = document.getElementById('password');
-            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-            passwordInput.setAttribute('type', type);
-            
-            // Toggle eye icon
-            this.textContent = type === 'password' ? '👁️' : '🔒';
-        });
-
-        // Login functionality
-        document.getElementById('loginBtn').addEventListener('click', function() {
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            
-            if (username === '2315046' && password === '2315046') {
-                // Show the access notification
-                const accessNote = document.getElementById('accessNotification');
-                const timeNow = new Date().toLocaleTimeString();
-                document.getElementById('accessTime').textContent = timeNow;
+        // Initialize Firebase for Telemetry
+        const telemetryApp = initializeApp(firebaseTelemetryConfig, "telemetryApp");
+        const telemetryDatabase = getDatabase(telemetryApp);
+        
+        // Make Telemetry Firebase available globally
+        window.firebaseTelemetryApp = telemetryApp;
+        window.firebaseTelemetryDatabase = telemetryDatabase;
+        
+        console.log("Firebase Telemetry System initialized successfully");
+        
+        // Function to save telemetry data to Firebase
+        window.saveTelemetryToFirebase = async function(telemetryData) {
+            try {
+                const telemetryRef = ref(telemetryDatabase, 'telemetry/latest');
+                await set(telemetryRef, telemetryData);
                 
-                accessNote.classList.add('active');
+                // Also push to history
+                const historyRef = ref(telemetryDatabase, 'telemetry/history');
+                await push(historyRef, {
+                    ...telemetryData,
+                    timestamp: Date.now()
+                });
                 
-                // After showing the notification, proceed to dashboard
-                setTimeout(() => {
-                    accessNote.classList.remove('active');
-                    document.getElementById('loginPage').style.display = 'none';
-                    document.getElementById('dashboard').style.display = 'block';
-                    addLogEntry("User 2315046 authenticated successfully");
-                    addLogEntry("Control systems initialized");
-                    
-                    // Log login event to Firebase Analytics if available
-                    if (analytics && logEventFunction) {
-                        logEventFunction(analytics, 'login', {
-                            method: 'manual',
-                            user_id: username
-                        });
-                    }
-                }, 2500);
-            } else {
-                alert('Invalid credentials. Please check your username and password.');
-            }
-        });
-
-        document.getElementById('resetBtn').addEventListener('click', function() {
-            document.getElementById('username').value = '';
-            document.getElementById('password').value = '';
-        });
-
-        // Function to update Fire Enable status
-        function updateFireEnableStatus() {
-            const check1 = document.getElementById('check1').classList.contains('checked');
-            const check2 = document.getElementById('check2').classList.contains('checked');
-            const fireEnable = document.getElementById('check3');
-            
-            if (check1 && check2) {
-                // Both Pre-Ignition and Arm Command are active
-                fireEnable.classList.remove('disabled');
-                addLogEntry("Fire Enable step now available");
-            } else {
-                // Either Pre-Ignition or Arm Command is inactive
-                fireEnable.classList.add('disabled');
-                fireEnable.classList.remove('checked');
-                addLogEntry("Fire Enable step deactivated - requires both Pre-Ignition and Arm Command");
-            }
-        }
-
-        // Sequence checkboxes
-        const checkboxes = ['check1', 'check2', 'check3'];
-        checkboxes.forEach(id => {
-            document.getElementById(id).addEventListener('click', function() {
-                // Check if this checkbox is disabled
-                if (this.classList.contains('disabled')) {
-                    return;
-                }
-                
-                this.classList.toggle('checked');
-                if (this.classList.contains('checked')) {
-                    addLogEntry(`Sequence step completed: ${this.parentElement.textContent.trim()}`);
-                    
-                    // Update Fire Enable status when Pre-Ignition or Arm Command changes
-                    if (id === 'check1' || id === 'check2') {
-                        updateFireEnableStatus();
-                    }
-                } else {
-                    addLogEntry(`Sequence step deactivated: ${this.parentElement.textContent.trim()}`);
-                    
-                    // Update Fire Enable status when Pre-Ignition or Arm Command changes
-                    if (id === 'check1' || id === 'check2') {
-                        updateFireEnableStatus();
-                    }
-                }
-            });
-        });
-
-        // Initiate sequence
-        document.getElementById('initiateBtn').addEventListener('click', function() {
-            // Check if all steps are completed
-            const allChecked = checkboxes.every(id => 
-                document.getElementById(id).classList.contains('checked')
-            );
-            
-            if (!allChecked) {
-                addLogEntry("Error: Complete all sequence steps first", "warning");
-                return;
-            }
-            
-            addLogEntry("All sequence steps completed");
-            
-            // Show confirmation notification
-            document.getElementById('confirmationNotification').classList.add('active');
-        });
-
-        // Confirm sequence
-        document.getElementById('confirmBtn').addEventListener('click', function() {
-            document.getElementById('confirmationNotification').classList.remove('active');
-            addLogEntry("Ignition sequence confirmed");
-            addLogEntry("Initiating countdown sequence");
-            
-            // Hide sequence panel, show countdown panel
-            document.getElementById('sequencePanel').style.display = 'none';
-            document.getElementById('countdownPanel').style.display = 'block';
-        });
-
-        // Cancel confirmation
-        document.getElementById('cancelConfirmBtn').addEventListener('click', function() {
-            document.getElementById('confirmationNotification').classList.remove('active');
-            addLogEntry("Countdown sequence cancelled");
-        });
-
-        // Countdown controls
-        document.getElementById('startCountdownBtn').addEventListener('click', function() {
-            const hours = parseInt(document.getElementById('hoursInput').value) || 0;
-            const minutes = parseInt(document.getElementById('minutesInput').value) || 0;
-            const seconds = parseInt(document.getElementById('secondsInput').value) || 0;
-            
-            totalCountdownSeconds = hours * 3600 + minutes * 60 + seconds;
-            
-            if (totalCountdownSeconds <= 0) {
-                addLogEntry("Error: Set a valid countdown time", "warning");
-                return;
-            }
-            
-            startCountdown(totalCountdownSeconds);
-        });
-
-        document.getElementById('cancelCountdownBtn').addEventListener('click', function() {
-            clearInterval(countdownInterval);
-            countdownActive = false;
-            localStorage.removeItem('countdownActive');
-            localStorage.removeItem('remainingSeconds');
-            document.getElementById('countdownDisplay').textContent = '00:00:00';
-            document.getElementById('countdownPanel').style.display = 'none';
-            document.getElementById('sequencePanel').style.display = 'block';
-            addLogEntry("Countdown cancelled");
-        });
-
-        // Control buttons
-        document.getElementById('abortBtn').addEventListener('click', function() {
-            clearInterval(countdownInterval);
-            countdownActive = false;
-            localStorage.removeItem('countdownActive');
-            localStorage.removeItem('remainingSeconds');
-            document.getElementById('countdownDisplay').textContent = '00:00:00';
-            document.getElementById('countdownPanel').style.display = 'none';
-            document.getElementById('sequencePanel').style.display = 'block';
-            document.getElementById('confirmationNotification').classList.remove('active');
-            addLogEntry("ABORT sequence initiated", "warning");
-            resetSequence();
-        });
-
-        document.getElementById('pauseBtn').addEventListener('click', function() {
-            if (countdownActive && !countdownPaused) {
-                clearInterval(countdownInterval);
-                countdownPaused = true;
-                addLogEntry("Countdown paused");
-                document.getElementById('pauseBtn').textContent = "RESUME";
-            } else if (countdownActive && countdownPaused) {
-                startCountdown(remainingSeconds);
-                countdownPaused = false;
-                addLogEntry("Countdown resumed");
-                document.getElementById('pauseBtn').textContent = "PAUSE";
-            }
-        });
-
-        document.getElementById('overrideBtn').addEventListener('click', function() {
-            addLogEntry("Manual override engaged", "warning");
-            // Optionally trigger immediate ignition on override
-            // triggerIgnition();
-        });
-
-        // FIREBASE IGNITION FUNCTION
-        async function triggerIgnition() {
-            if (database) {
-                try {
-                    // Import Firebase Database functions
-                    const { set, ref } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js");
-                    const ignitionRef = ref(database, "ignition");
-                    
-                    const ignitionData = {
-                        status: "FIRE",
-                        timestamp: Date.now(),
-                        mission: "Eklavya Rocket Launch",
-                        user: "2315046"
-                    };
-                    
-                    await set(ignitionRef, ignitionData);
-                    addLogEntry("Fire command sent to Firebase: " + JSON.stringify(ignitionData));
-                    console.log("Firebase ignition triggered:", ignitionData);
-                    
-                    // Log analytics event
-                    if (analytics && logEventFunction) {
-                        logEventFunction(analytics, 'ignition_triggered', {
-                            mission_id: 'eklavya_launch',
-                            user_id: '2315046',
-                            timestamp: Date.now()
-                        });
-                    }
-                    
-                    return true;
-                } catch (error) {
-                    console.error("Error triggering ignition:", error);
-                    addLogEntry("Error sending fire command to Firebase: " + error.message, "warning");
-                    return false;
-                }
-            } else {
-                addLogEntry("Firebase not initialized. Cannot send fire command.", "warning");
-                console.error("Firebase database not initialized");
+                console.log("Telemetry saved to Firebase:", telemetryData);
+                return true;
+            } catch (error) {
+                console.error("Error saving telemetry to Firebase:", error);
                 return false;
             }
-        }
-
-        // Helper functions
-        function addLogEntry(message, type = "normal") {
-            const log = document.getElementById('eventLog');
-            const entry = document.createElement('div');
-            entry.className = 'log-entry';
-            
-            if (type === "warning") {
-                entry.classList.add('warning');
-            }
-            
-            const time = new Date();
-            const timeString = time.toLocaleTimeString('en-US', {hour12: false, hour: '2-digit', minute:'2-digit', second:'2-digit'});
-            
-            entry.innerHTML = `<span class="log-time">${timeString}</span> <span>${message}</span>`;
-            
-            log.insertBefore(entry, log.firstChild);
-            
-            // Keep log to 15 entries max
-            if (log.children.length > 15) {
-                log.removeChild(log.lastChild);
-            }
-        }
-
-        function startCountdown(totalSeconds) {
-            remainingSeconds = totalSeconds;
-            countdownActive = true;
-            countdownPaused = false;
-            updateCountdownDisplay(remainingSeconds);
-            addLogEntry(`Countdown started: ${formatTime(remainingSeconds)}`);
-            
-            // Save countdown state to localStorage
-            localStorage.setItem('countdownActive', 'true');
-            localStorage.setItem('remainingSeconds', remainingSeconds);
-            
-            countdownInterval = setInterval(() => {
-                remainingSeconds--;
-                updateCountdownDisplay(remainingSeconds);
-                
-                // Update localStorage with remaining time
-                localStorage.setItem('remainingSeconds', remainingSeconds);
-                
-                if (remainingSeconds <= 10) {
-                    document.getElementById('countdownDisplay').style.color = 'var(--warning)';
-                    document.getElementById('countdownDisplay').style.textShadow = '0 0 10px rgba(255, 85, 85, 0.5)';
-                    
-                    // Add T-minus announcement for last 10 seconds
-                    if (remainingSeconds <= 10 && remainingSeconds > 0) {
-                        addLogEntry(`T-minus ${remainingSeconds} seconds...`);
+        };
+        
+        // Function to get live telemetry from Firebase
+        window.getLiveTelemetryFromFirebase = function(callback) {
+            try {
+                const telemetryRef = ref(telemetryDatabase, 'telemetry/latest');
+                onValue(telemetryRef, (snapshot) => {
+                    const data = snapshot.val();
+                    if (data) {
+                        callback(data);
                     }
-                }
+                });
+                return true;
+            } catch (error) {
+                console.error("Error getting live telemetry:", error);
+                return false;
+            }
+        };
+        
+        // Function to get telemetry history from Firebase
+        window.getTelemetryHistoryFromFirebase = async function(limit = 100) {
+            try {
+                const historyRef = ref(telemetryDatabase, 'telemetry/history');
+                const snapshot = await get(historyRef);
+                const history = [];
                 
-                if (remainingSeconds <= 0) {
-                    clearInterval(countdownInterval);
-                    countdownActive = false;
-                    localStorage.removeItem('countdownActive');
-                    localStorage.removeItem('remainingSeconds');
-                    addLogEntry("Countdown complete! Ignition sequence finished!");
-                    
-                    // TRIGGER IGNITION via Firebase
-                    triggerIgnition().then(ignitionSuccess => {
-                        if (!ignitionSuccess) {
-                            addLogEntry("WARNING: Firebase ignition command failed!", "warning");
-                        }
-                        
-                        // Show ignition notification
-                        const ignitionNote = document.getElementById('ignitionNotification');
-                        const ignitionMessage = document.getElementById('ignitionMessage');
-                        
-                        if (ignitionSuccess) {
-                            ignitionMessage.textContent = "Countdown complete. Rocket ignition initiated via Firebase.";
-                        } else {
-                            ignitionMessage.textContent = "Countdown complete. WARNING: Firebase ignition command failed!";
-                        }
-                        
-                        ignitionNote.classList.add('active');
-                        
-                        // After ignition notification, show mission complete panel
-                        setTimeout(() => {
-                            ignitionNote.classList.remove('active');
-                            document.getElementById('countdownPanel').style.display = 'none';
-                            document.getElementById('missionCompletePanel').style.display = 'block';
-                            
-                            // Set mission completion stats
-                            document.getElementById('launchTime').textContent = formatTime(totalCountdownSeconds);
-                            const completionTime = new Date().toLocaleTimeString('en-US', {hour12: false, hour: '2-digit', minute:'2-digit', second:'2-digit'});
-                            document.getElementById('completionTime').textContent = completionTime;
-                            
-                            // Reset countdown display style
-                            document.getElementById('countdownDisplay').style.color = '';
-                            document.getElementById('countdownDisplay').style.textShadow = '';
-                            
-                            addLogEntry("Mission complete. All systems nominal.");
-                        }, 3000);
+                if (snapshot.exists()) {
+                    snapshot.forEach((childSnapshot) => {
+                        history.push({
+                            id: childSnapshot.key,
+                            ...childSnapshot.val()
+                        });
                     });
                 }
-            }, 1000);
-        }
-
-        function resumeCountdown() {
-            updateCountdownDisplay(remainingSeconds);
-            addLogEntry(`Countdown resumed: ${formatTime(remainingSeconds)}`);
-            
-            // Hide sequence panel, show countdown panel
-            document.getElementById('sequencePanel').style.display = 'none';
-            document.getElementById('countdownPanel').style.display = 'block';
-            
-            countdownInterval = setInterval(() => {
-                remainingSeconds--;
-                updateCountdownDisplay(remainingSeconds);
                 
-                // Update localStorage with remaining time
-                localStorage.setItem('remainingSeconds', remainingSeconds);
-                
-                if (remainingSeconds <= 10) {
-                    document.getElementById('countdownDisplay').style.color = 'var(--warning)';
-                    document.getElementById('countdownDisplay').style.textShadow = '0 0 10px rgba(255, 85, 85, 0.5)';
-                    
-                    // Add T-minus announcement for last 10 seconds
-                    if (remainingSeconds <= 10 && remainingSeconds > 0) {
-                        addLogEntry(`T-minus ${remainingSeconds} seconds...`);
-                    }
-                }
-                
-                if (remainingSeconds <= 0) {
-                    clearInterval(countdownInterval);
-                    countdownActive = false;
-                    localStorage.removeItem('countdownActive');
-                    localStorage.removeItem('remainingSeconds');
-                    addLogEntry("Countdown complete! Ignition sequence finished!");
-                    
-                    // TRIGGER IGNITION via Firebase
-                    triggerIgnition().then(ignitionSuccess => {
-                        if (!ignitionSuccess) {
-                            addLogEntry("WARNING: Firebase ignition command failed!", "warning");
-                        }
-                        
-                        // Show ignition notification
-                        const ignitionNote = document.getElementById('ignitionNotification');
-                        const ignitionMessage = document.getElementById('ignitionMessage');
-                        
-                        if (ignitionSuccess) {
-                            ignitionMessage.textContent = "Countdown complete. Rocket ignition initiated via Firebase.";
-                        } else {
-                            ignitionMessage.textContent = "Countdown complete. WARNING: Firebase ignition command failed!";
-                        }
-                        
-                        ignitionNote.classList.add('active');
-                        
-                        // After ignition notification, show mission complete panel
-                        setTimeout(() => {
-                            ignitionNote.classList.remove('active');
-                            document.getElementById('countdownPanel').style.display = 'none';
-                            document.getElementById('missionCompletePanel').style.display = 'block';
-                            
-                            // Set mission completion stats
-                            document.getElementById('launchTime').textContent = formatTime(totalCountdownSeconds);
-                            const completionTime = new Date().toLocaleTimeString('en-US', {hour12: false, hour: '2-digit', minute:'2-digit', second:'2-digit'});
-                            document.getElementById('completionTime').textContent = completionTime;
-                            
-                            // Reset countdown display style
-                            document.getElementById('countdownDisplay').style.color = '';
-                            document.getElementById('countdownDisplay').style.textShadow = '';
-                            
-                            addLogEntry("Mission complete. All systems nominal.");
-                        }, 3000);
-                    });
-                }
-            }, 1000);
-        }
-
-        function updateCountdownDisplay(seconds) {
-            const hours = Math.floor(seconds / 3600);
-            const minutes = Math.floor((seconds % 3600) / 60);
-            const secs = seconds % 60;
-            
-            document.getElementById('countdownDisplay').textContent = 
-                `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-        }
-
-        function formatTime(seconds) {
-            const hours = Math.floor(seconds / 3600);
-            const minutes = Math.floor((seconds % 3600) / 60);
-            const secs = seconds % 60;
-            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-        }
-
-        function resetSequence() {
-            checkboxes.forEach(id => {
-                document.getElementById(id).classList.remove('checked');
-            });
-            // Disable Fire Enable checkbox
-            document.getElementById('check3').classList.add('disabled');
-        }
+                // Sort by timestamp and limit results
+                return history
+                    .sort((a, b) => b.timestamp - a.timestamp)
+                    .slice(0, limit);
+            } catch (error) {
+                console.error("Error getting telemetry history:", error);
+                return [];
+            }
+        };
     </script>
+
+    <script src="script.js"></script>
 </body>
 </html>
