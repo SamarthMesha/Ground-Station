@@ -64,9 +64,9 @@
         
         <div class="csv-buttons-wrapper">
             <!-- Add Ignition Button here -->
-            <button id="ignition-system-btn" class="csv-btn ignition-btn">
+            <button id="ignition-control-btn" class="csv-btn ignition-btn">
                 <i class="fas fa-fire"></i>
-                <span>Ignition System</span>
+                <span>Ignition Control</span>
             </button>
             
             <button id="download-data-csv" class="csv-btn data-csv">
@@ -80,7 +80,7 @@
         </div>
     </div>
 
-    <!-- Ignition System Overlay (full-screen) -->
+    <!-- Ignition Control Overlay (full-screen) -->
     <div class="ignition-overlay" id="ignition-overlay">
         <div class="ignition-container" id="ignition-container">
             <!-- Login will be loaded here initially -->
@@ -200,141 +200,142 @@
     </div>
 
     <main>
-        <!-- Primary Telemetry Section (Always Visible) -->
-        <section id="primary-telemetry" class="card-container">
-            <div class="card-header">
-                <h2><i class="fas fa-satellite-dish"></i> PRIMARY TELEMETRY</h2>
-                <div class="telemetry-status">
-                    <button id="download-telemetry-btn" class="telemetry-download-btn">
-                        <i class="fas fa-download"></i>
-                        <span>Download Telemetry</span>
-                    </button>
+       <!-- Primary Telemetry Section (Always Visible) -->
+<section id="primary-telemetry" class="card-container">
+    <div class="card-header">
+        <h2><i class="fas fa-satellite-dish"></i> PRIMARY TELEMETRY</h2>
+        <div class="telemetry-status">
+            <button id="download-telemetry-btn" class="telemetry-download-btn">
+                <i class="fas fa-download"></i>
+                <span>Download Telemetry</span>
+            </button>
+        </div>
+    </div>
+    <div class="telemetry-grid">
+        <div class="telemetry-card">
+            <div class="telemetry-header">
+                <h3><i class="fas fa-map-marker-alt"></i> POSITION DATA</h3>
+            </div>
+            <div class="telemetry-body">
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Latitude</span>
+                    <span class="telemetry-value scientific-value" id="latitude">--.--° N</span>
+                </div>
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Longitude</span>
+                    <span class="telemetry-value scientific-value" id="longitude">--.--° E</span>
+                </div>
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Altitude</span>
+                    <span class="telemetry-value scientific-value" id="altitude">-- m</span>
+                </div>
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Downrange</span>
+                    <span class="telemetry-value scientific-value" id="downrange">-- m</span>
                 </div>
             </div>
-            <div class="telemetry-grid">
-                <div class="telemetry-card">
-                    <div class="telemetry-header">
-                        <h3><i class="fas fa-map-marker-alt"></i> POSITION DATA</h3>
-                    </div>
-                    <div class="telemetry-body">
-                        <div class="telemetry-row">
-                            <span class="telemetry-label">Latitude</span>
-                            <span class="telemetry-value scientific-value" id="latitude">--.--° N</span>
-                        </div>
-                        <div class="telemetry-row">
-                            <span class="telemetry-label">Longitude</span>
-                            <span class="telemetry-value scientific-value" id="longitude">--.--° E</span>
-                        </div>
-                        <div class="telemetry-row">
-                            <span class="telemetry-label">Altitude</span>
-                            <span class="telemetry-value scientific-value" id="altitude">-- m</span>
-                        </div>
-                        <div class="telemetry-row">
-                            <span class="telemetry-label">Downrange</span>
-                            <span class="telemetry-value scientific-value" id="downrange">-- m</span>
-                        </div>
-                    </div>
-                </div>
+        </div>
 
-                <div class="telemetry-card">
-                    <div class="telemetry-header">
-                        <h3><i class="fas fa-tachometer-alt"></i> ACCELERATION</h3>
-                    </div>
-                    <div class="telemetry-body">
-                        <div class="telemetry-row">
-                            <span class="telemetry-label">Accel X (Ax)</span>
-                            <span class="telemetry-value scientific-value" id="accel-x">-- G</span>
-                        </div>
-                        <div class="telemetry-row">
-                            <span class="telemetry-label">Accel Y (Ay)</span>
-                            <span class="telemetry-value scientific-value" id="accel-y">-- G</span>
-                        </div>
-                        <div class="telemetry-row">
-                            <span class="telemetry-label">Accel Z (Az)</span>
-                            <span class="telemetry-value scientific-value" id="accel-z">-- G</span>
-                        </div>
-                        <div class="telemetry-row">
-                            <span class="telemetry-label">Total Accel</span>
-                            <span class="telemetry-value scientific-value" id="total-accel">-- G</span>
-                        </div>
-                    </div>
+        <div class="telemetry-card">
+            <div class="telemetry-header">
+                <h3><i class="fas fa-tachometer-alt"></i> ACCELERATION </h3>
+            </div>
+            <div class="telemetry-body">
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Accel X (Ax)</span>
+                    <span class="telemetry-value scientific-value" id="accel-x">-- G</span>
                 </div>
-
-                <div class="telemetry-card">
-                    <div class="telemetry-header">
-                        <h3><i class="fas fa-compass"></i> ORIENTATION</h3>
-                    </div>
-                    <div class="telemetry-body">
-                        <div class="telemetry-row">
-                            <span class="telemetry-label">Roll (Φ)</span>
-                            <span class="telemetry-value scientific-value" id="roll">--°</span>
-                        </div>
-                        <div class="telemetry-row">
-                            <span class="telemetry-label">Pitch (θ)</span>
-                            <span class="telemetry-value scientific-value" id="pitch">--°</span>
-                        </div>
-                        <div class="telemetry-row">
-                            <span class="telemetry-label">Yaw (Ψ)</span>
-                            <span class="telemetry-value scientific-value" id="yaw">--°</span>
-                        </div>
-                        <div class="telemetry-row">
-                            <span class="telemetry-label">Angular Rate</span>
-                            <span class="telemetry-value scientific-value" id="angular-rate">--°/s</span>
-                        </div>
-                    </div>
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Accel Y (Ay)</span>
+                    <span class="telemetry-value scientific-value" id="accel-y">-- G</span>
                 </div>
-
-                <div class="telemetry-card">
-                    <div class="telemetry-header">
-                        <h3><i class="fas fa-heartbeat"></i> SYSTEM STATUS</h3>
-                    </div>
-                    <div class="telemetry-body">
-                        <div class="telemetry-row">
-                            <span class="telemetry-label">Ignition</span>
-                            <span class="telemetry-value status" id="ignition-status" data-status="critical">NOT IGNITED</span>
-                        </div>
-                        <div class="telemetry-row">
-                            <span class="telemetry-label">Comm Status</span>
-                            <span class="telemetry-value status" id="comm-status" data-status="critical">NO DATA</span>
-                        </div>
-                        <div class="telemetry-row">
-                            <span class="telemetry-label">GPS Satellites</span>
-                            <span class="telemetry-value scientific-value" id="gps-sats">--</span>
-                        </div>
-                        <div class="telemetry-row">
-                            <span class="telemetry-label">Temperature</span>
-                            <span class="telemetry-value scientific-value" id="temperature">-- °C</span>
-                        </div>
-                    </div>
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Accel Z (Az)</span>
+                    <span class="telemetry-value scientific-value" id="accel-z">-- G</span>
                 </div>
-
-                <!-- New: Thermocouple Data Card -->
-                <div class="telemetry-card">
-                    <div class="telemetry-header">
-                        <h3><i class="fas fa-thermometer-half"></i> THERMOCOUPLE DATA</h3>
-                    </div>
-                    <div class="telemetry-body">
-                        <div class="telemetry-row">
-                            <span class="telemetry-label">TC1 - Nose Cone</span>
-                            <span class="telemetry-value scientific-value" id="thermocouple-1">-- °C</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- New: Strain Gauge Data Card -->
-                <div class="telemetry-card">
-                    <div class="telemetry-header">
-                        <h3><i class="fas fa-weight-hanging"></i> STRAIN GAUGE DATA</h3>
-                    </div>
-                    <div class="telemetry-body">
-                        <div class="telemetry-row">
-                            <span class="telemetry-label">SG1 - Nose Joint</span>
-                            <span class="telemetry-value scientific-value" id="strain-gauge-1">-- µε</span>
-                        </div>
-                    </div>
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Total Accel</span>
+                    <span class="telemetry-value scientific-value" id="total-accel">-- G</span>
                 </div>
             </div>
-        </section>
+        </div>
+
+        <div class="telemetry-card">
+            <div class="telemetry-header">
+                <h3><i class="fas fa-compass"></i> ORIENTATION</h3>
+            </div>
+            <div class="telemetry-body">
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Roll (Φ)</span>
+                    <span class="telemetry-value scientific-value" id="roll">--°</span>
+                </div>
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Pitch (θ)</span>
+                    <span class="telemetry-value scientific-value" id="pitch">--°</span>
+                </div>
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Yaw (Ψ)</span>
+                    <span class="telemetry-value scientific-value" id="yaw">--°</span>
+                </div>
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Angular Rate</span>
+                    <span class="telemetry-value scientific-value" id="angular-rate">--°/s</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="telemetry-card">
+            <div class="telemetry-header">
+                <h3><i class="fas fa-heartbeat"></i> SYSTEM STATUS</h3>
+            </div>
+            <div class="telemetry-body">
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Ignition</span>
+                    <span class="telemetry-value status" id="ignition-status" data-status="critical">NOT IGNITED</span>
+                </div>
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Comm Status</span>
+                    <span class="telemetry-value status" id="comm-status" data-status="critical">NO DATA</span>
+                </div>
+                <div class="telemetry-row">
+                    <span class="telemetry-label">GPS Satellites</span>
+                    <span class="telemetry-value scientific-value" id="gps-sats">--</span>
+                </div>
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Temperature</span>
+                    <span class="telemetry-value scientific-value" id="temperature">-- °C</span>
+                </div>
+            </div>
+        </div>
+     <!-- New: Thermocouple Data Card -->
+        <div class="telemetry-card">
+            <div class="telemetry-header">
+                <h3><i class="fas fa-thermometer-half"></i> THERMOCOUPLE DATA</h3>
+            </div>
+            <div class="telemetry-body">
+                <div class="telemetry-row">
+                    <span class="telemetry-label">TC1 - Nose Cone</span>
+                    <span class="telemetry-value scientific-value" id="thermocouple-1">-- °C</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- New: Strain Gauge Data Card -->
+        <div class="telemetry-card">
+            <div class="telemetry-header">
+                <h3><i class="fas fa-weight-hanging"></i> STRAIN GAUGE DATA</h3>
+            </div>
+            <div class="telemetry-body">
+                <div class="telemetry-row">
+                    <span class="telemetry-label">SG1 - Nose Joint</span>
+                    <span class="telemetry-value scientific-value" id="strain-gauge-1">-- µε</span>
+                </div>
+            </div>
+        </div>
+    </div>
+        </div>
+    </div>
+</section>
 
         <!-- Performance Analysis Panel -->
         <section id="performance-panel" class="panel-container hidden">
@@ -346,7 +347,6 @@
                 <h2><i class="fas fa-chart-line"></i> PERFORMANCE ANALYSIS</h2>
                 <div class="panel-controls">
                     <div class="chart-metrics">
-                        <span>Data Buffer: <span id="data-buffer">0</span> points</span>
                     </div>
                 </div>
             </div>
@@ -494,12 +494,6 @@
                 <h2><i class="fas fa-globe-americas"></i> LIVE GOOGLE EARTH TRACKING</h2>
                 <div class="panel-controls">
                     <div class="gps-status">
-                        <div class="gps-status-item">
-                            <span id="gps-tracking-status" data-status="critical">TRACKING INACTIVE</span>
-                        </div>
-                        <div class="gps-status-item">
-                            <span id="gps-last-update">Last Update: --:--:--</span>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -583,9 +577,6 @@
                 </button>
                 <h2><i class="fas fa-rocket"></i> 3D ROCKET & FLIGHT DYNAMICS</h2>
                 <div class="panel-controls">
-                    <div class="rocket-status">
-                        <span id="rocket-status">3D Visualization Ready</span>
-                    </div>
                 </div>
             </div>
             
@@ -603,10 +594,6 @@
                                     <div class="stat-item">
                                         <span class="stat-label"><i class="fas fa-compass"></i> Orientation:</span>
                                         <span class="stat-value" id="rocket-orientation">Stable</span>
-                                    </div>
-                                    <div class="stat-item">
-                                        <span class="stat-label"><i class="fas fa-tachometer-alt"></i> Rotation:</span>
-                                        <span class="stat-value" id="rocket-rotation">0°/s</span>
                                     </div>
                                 </div>
                             </div>
@@ -672,14 +659,14 @@
 
         // Your web app's Firebase configuration for Telemetry Data
         const firebaseTelemetryConfig = {
-            apiKey: "AIzaSyAjHxtN7YmwNXicU4qpCIgtZhgksfpnd2E",
-            authDomain: "ignition-control-system.firebaseapp.com",
-            databaseURL: "https://ignition-control-system-default-rtdb.firebaseio.com",
-            projectId: "ignition-control-system",
-            storageBucket: "ignition-control-system.firebasestorage.app",
-            messagingSenderId: "179028944207",
-            appId: "1:179028944207:web:09c9511a3dd202d0f2113a",
-            measurementId: "G-HG0LFJZ43M"
+            apiKey: "AIzaSyApK9p7x2nzPEjN2Cq8SVbE_x5cR37zQ6Y",
+            authDomain: "eklavya-telemetry-data.firebaseapp.com",
+            databaseURL: "https://eklavya-telemetry-data-default-rtdb.firebaseio.com",
+            projectId: "eklavya-telemetry-data",
+            storageBucket: "eklavya-telemetry-data.firebasestorage.app",
+            messagingSenderId: "987654321098",
+            appId: "1:987654321098:web:abcdef1234567890",
+            measurementId: "G-ABCDEF1234"
         };
 
         // Initialize Firebase for Telemetry
