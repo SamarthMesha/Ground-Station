@@ -1,3 +1,7 @@
+// ===== MISSION CONTROL DASHBOARD - SPACE CLUB RIT =====
+// Enhanced with ignition control system and live GPS tracking
+
+// Main application state
 const AppState = {
     missionActive: false,
     missionStartTime: null,
@@ -84,7 +88,7 @@ const FirebaseTelemetryState = {
     isConnected: false,
     lastSavedTime: null,
     saveInterval: null,
-    saveRate: 1000, // Save to Firebase every 1 seconds
+    saveRate: 5000, // Save to Firebase every 5 seconds
     liveDataListener: null
 };
 
@@ -170,7 +174,7 @@ const domElements = {
     dataBuffer: document.getElementById('data-buffer'),
     
     // Ignition elements
-    ignitionControlBtn: document.getElementById('ignition-system-btn'),
+    ignitionControlBtn: document.getElementById('ignition-control-btn'),
     ignitionOverlay: document.getElementById('ignition-overlay'),
     ignitionContainer: document.getElementById('ignition-container'),
     closeIgnitionBtn: document.getElementById('close-ignition-btn'),
@@ -203,103 +207,11 @@ function initializeApp() {
     // Initialize Firebase Telemetry
     initializeFirebaseTelemetry();
     
-    // Initialize event listeners (WITH FIX FOR IGNITION BUTTON)
+    // Initialize event listeners
     initializeEventListeners();
     
     console.log('Mission Control Dashboard initialized');
     addLogEntry('SYSTEM', 'Mission Control initialized. Waiting for system connection...');
-}
-
-// ===== FIXED EVENT LISTENERS WITH IGNITION BUTTON FIX =====
-function initializeEventListeners() {
-    console.log('Initializing event listeners...');
-    
-    // Menu navigation
-    initializeMenuNavigation();
-    
-    // ===== FIXED: Ignition system button =====
-    // Event delegation for ignition button (works for dynamically added elements too)
-    document.addEventListener('click', function(e) {
-        // Check if clicked element is ignition button or inside it
-        if (e.target.id === 'ignition-system-btn' || 
-            e.target.closest('#ignition-system-btn') ||
-            e.target.classList.contains('ignition-btn') ||
-            e.target.closest('.ignition-btn')) {
-            console.log('Ignition button clicked via delegation');
-            openIgnitionSystem();
-        }
-    });
-    
-    // Also attach direct event listener for safety
-    const ignitionBtn = document.getElementById('ignition-system-btn');
-    if (ignitionBtn && !ignitionBtn.hasAttribute('data-listener-added')) {
-        ignitionBtn.setAttribute('data-listener-added', 'true');
-        ignitionBtn.addEventListener('click', function(e) {
-            console.log('Ignition button clicked directly');
-            e.preventDefault();
-            e.stopPropagation();
-            openIgnitionSystem();
-        });
-    }
-    
-    // Close ignition button
-    if (domElements.closeIgnitionBtn) {
-        domElements.closeIgnitionBtn.addEventListener('click', closeIgnitionSystem);
-    }
-    // ===== END FIX =====
-    
-    // Primary telemetry download button
-    if (domElements.downloadTelemetryBtn) {
-        domElements.downloadTelemetryBtn.addEventListener('click', downloadPrimaryTelemetry);
-    }
-    
-    // Control buttons
-    if (domElements.resetButton) {
-        domElements.resetButton.addEventListener('click', resetMission);
-    }
-    
-    if (domElements.downloadDataCSV) {
-        domElements.downloadDataCSV.addEventListener('click', exportDataCSV);
-    }
-    
-    if (domElements.downloadGraphsCSV) {
-        domElements.downloadGraphsCSV.addEventListener('click', exportGraphsCSV);
-    }
-    
-    if (domElements.downloadTrajectoryCSV) {
-        domElements.downloadTrajectoryCSV.addEventListener('click', downloadTrajectoryCSV);
-    }
-    
-    // Map controls
-    if (domElements.toggleSatellite) {
-        domElements.toggleSatellite.addEventListener('click', () => toggleMapType('satellite'));
-    }
-    
-    // Chart CSV download buttons
-    document.querySelectorAll('.download-csv-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const chartType = this.getAttribute('data-chart');
-            downloadChartCSV(chartType);
-        });
-    });
-    
-    // Refresh warning continue button
-    if (domElements.continueBtn) {
-        domElements.continueBtn.addEventListener('click', hideRefreshWarning);
-    }
-    
-    // Prevent page refresh during countdown
-    window.addEventListener('beforeunload', function(e) {
-        if (IgnitionState.countdownActive && !IgnitionState.countdownPaused) {
-            e.preventDefault();
-            e.returnValue = '';
-            showRefreshWarning();
-            return '';
-        }
-    });
-    
-    // Add Connect/Disconnect buttons to menu
-    addConnectionControls();
 }
 
 // ===== FIREBASE TELEMETRY SYSTEM =====
@@ -1318,7 +1230,7 @@ function startIgnitionCountdown(totalSeconds) {
             }
             
             // Add T-minus announcement
-            if (IgnitionState.remainingSeconds <= 5 && IgnitionState.remainingSeconds > 0) {
+            if (IgnitionState.remainingSeconds <= 10 && IgnitionState.remainingSeconds > 0) {
                 addIgnitionLogEntry(`T-minus ${IgnitionState.remainingSeconds} seconds...`);
             }
         }
@@ -2559,6 +2471,109 @@ function closeMenu() {
     document.body.style.overflow = 'auto';
 }
 
+// ===== EVENT LISTENERS =====
+function initializeEventListeners() {
+    console.log('Initializing event listeners...');
+    
+    // Menu navigation
+    initializeMenuNavigation();
+    
+    // Ignition system
+    if (domElements.ignitionControlBtn) {
+        domElements.ignitionControlBtn.addEventListener('click', openIgnitionSystem);
+    }
+    
+    if (domElements.closeIgnitionBtn) {
+        domElements.closeIgnitionBtn.addEventListener('click', closeIgnitionSystem);
+    }
+    
+    // Primary telemetry download button
+    if (domElements.downloadTelemetryBtn) {
+        domElements.downloadTelemetryBtn.addEventListener('click', downloadPrimaryTelemetry);
+    }
+    
+    // Control buttons
+    if (domElements.resetButton) {
+        domElements.resetButton.addEventListener('click', resetMission);
+    }
+    
+    if (domElements.downloadDataCSV) {
+        domElements.downloadDataCSV.addEventListener('click', exportDataCSV);
+    }
+    
+    if (domElements.downloadGraphsCSV) {
+        domElements.downloadGraphsCSV.addEventListener('click', exportGraphsCSV);
+    }
+    
+    if (domElements.downloadTrajectoryCSV) {
+        domElements.downloadTrajectoryCSV.addEventListener('click', downloadTrajectoryCSV);
+    }
+    
+    // Map controls
+    if (domElements.toggleSatellite) {
+        domElements.toggleSatellite.addEventListener('click', () => toggleMapType('satellite'));
+    }
+    
+    // Chart CSV download buttons
+    document.querySelectorAll('.download-csv-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const chartType = this.getAttribute('data-chart');
+            downloadChartCSV(chartType);
+        });
+    });
+    
+    // Refresh warning continue button
+    if (domElements.continueBtn) {
+        domElements.continueBtn.addEventListener('click', hideRefreshWarning);
+    }
+    
+    // Prevent page refresh during countdown
+    window.addEventListener('beforeunload', function(e) {
+        if (IgnitionState.countdownActive && !IgnitionState.countdownPaused) {
+            e.preventDefault();
+            e.returnValue = '';
+            showRefreshWarning();
+            return '';
+        }
+    });
+    
+    // Add Connect/Disconnect buttons to menu
+    addConnectionControls();
+}
+
+function addConnectionControls() {
+    // Add connection controls to the menu
+    const menuFooter = document.querySelector('.menu-footer');
+    if (menuFooter) {
+        const connectBtn = document.createElement('button');
+        connectBtn.id = 'connect-system-btn';
+        connectBtn.className = 'control-btn connect-btn';
+        connectBtn.innerHTML = '<i class="fas fa-plug"></i><span>Connect System</span>';
+        
+        const disconnectBtn = document.createElement('button');
+        disconnectBtn.id = 'disconnect-system-btn';
+        disconnectBtn.className = 'control-btn disconnect-btn';
+        disconnectBtn.innerHTML = '<i class="fas fa-plug"></i><span>Disconnect System</span>';
+        disconnectBtn.style.display = 'none';
+        
+        menuFooter.insertBefore(connectBtn, menuFooter.firstChild);
+        menuFooter.insertBefore(disconnectBtn, menuFooter.firstChild.nextSibling);
+        
+        // Add event listeners
+        connectBtn.addEventListener('click', () => {
+            connectToSystem();
+            connectBtn.style.display = 'none';
+            disconnectBtn.style.display = 'flex';
+        });
+        
+        disconnectBtn.addEventListener('click', () => {
+            disconnectFromSystem();
+            disconnectBtn.style.display = 'none';
+            connectBtn.style.display = 'flex';
+        });
+    }
+}
+
 // ===== TELEMETRY PROCESSING =====
 function processTelemetryData(data) {
     try {
@@ -3468,39 +3483,6 @@ function resetAllDisplays() {
             domElements.commStatus.textContent = 'NO CONNECTION';
             domElements.commStatus.setAttribute('data-status', 'critical');
         }
-    }
-}
-
-function addConnectionControls() {
-    // Add connection controls to the menu
-    const menuFooter = document.querySelector('.menu-footer');
-    if (menuFooter) {
-        const connectBtn = document.createElement('button');
-        connectBtn.id = 'connect-system-btn';
-        connectBtn.className = 'control-btn connect-btn';
-        connectBtn.innerHTML = '<i class="fas fa-plug"></i><span>Connect System</span>';
-        
-        const disconnectBtn = document.createElement('button');
-        disconnectBtn.id = 'disconnect-system-btn';
-        disconnectBtn.className = 'control-btn disconnect-btn';
-        disconnectBtn.innerHTML = '<i class="fas fa-plug"></i><span>Disconnect System</span>';
-        disconnectBtn.style.display = 'none';
-        
-        menuFooter.insertBefore(connectBtn, menuFooter.firstChild);
-        menuFooter.insertBefore(disconnectBtn, menuFooter.firstChild.nextSibling);
-        
-        // Add event listeners
-        connectBtn.addEventListener('click', () => {
-            connectToSystem();
-            connectBtn.style.display = 'none';
-            disconnectBtn.style.display = 'flex';
-        });
-        
-        disconnectBtn.addEventListener('click', () => {
-            disconnectFromSystem();
-            disconnectBtn.style.display = 'none';
-            connectBtn.style.display = 'flex';
-        });
     }
 }
 
