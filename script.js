@@ -7,8 +7,9 @@ const AppState = {
     dataRate: 0,
     packetCount: 0,
     lastUpdateTime: null,
-    launchSitePosition: { lat: 18.7291, lng: 73.4642 },
+    launchSitePosition: { lat: 18.7291, lng: 73.4642 }, // RIT coordinates
     
+    // Sensor initialization status - all false initially
     sensors: {
         bmp280: { initialized: false, name: 'BMP280' },
         mpu6050: { initialized: false, name: 'MPU6050' },
@@ -16,6 +17,7 @@ const AppState = {
         loraSX1262: { initialized: false, name: 'LoRa SX1262' }
     },
     
+    // Communication status
     communicationEstablished: false,
     isSystemConnected: false,
     
@@ -25,16 +27,19 @@ const AppState = {
     currentAltitude: 0,
     activePanel: null,
     
+    // 3D Scene
     scene: null,
     camera: null,
     renderer: null,
     rocket: null,
     
+    // Google Maps
     googleMap: null,
     flightMarker: null,
     flightPath: null,
     launchSiteMarker: null,
     
+    // Chart data (will only populate when sensors are initialized)
     chartData: {
         altitude: [],
         pressure: [],
@@ -47,6 +52,7 @@ const AppState = {
     }
 };
 
+// Ignition system state
 const IgnitionState = {
     isActive: false,
     countdownActive: false,
@@ -62,57 +68,69 @@ const IgnitionState = {
     }
 };
 
+// GPS Tracking state
 const GpsTrackingState = {
     isTracking: false,
     updateInterval: null,
     lastPosition: null,
-    updateRate: 1000,
+    updateRate: 1000, // Update every 1 second
     positionHistory: [],
     maxHistorySize: 100,
     lastUpdateTime: null
 };
 
+// Firebase Telemetry State
 const FirebaseTelemetryState = {
     isConnected: false,
     lastSavedTime: null,
     saveInterval: null,
-    saveRate: 1000,
+    saveRate: 1000, // Save to Firebase every 1 seconds
     liveDataListener: null
 };
 
+// Chart instances
 let altitudeChart, trajectoryChart, accelerationChart, temperatureChart, pressureChart;
 
+// DOM Elements
 const domElements = {
+    // Menu elements
     menuToggle: document.getElementById('menu-toggle'),
     menuOverlay: document.getElementById('menu-overlay'),
     menuClose: document.getElementById('menu-close'),
     menuCards: document.querySelectorAll('.menu-card'),
     panelBackBtns: document.querySelectorAll('.panel-back-btn'),
     
+    // Download button
     downloadTelemetryBtn: document.getElementById('download-telemetry-btn'),
     
+    // Primary telemetry
     latitude: document.getElementById('latitude'),
     longitude: document.getElementById('longitude'),
     altitude: document.getElementById('altitude'),
     downrange: document.getElementById('downrange'),
     
+    // Acceleration vectors
     accelX: document.getElementById('accel-x'),
     accelY: document.getElementById('accel-y'),
     accelZ: document.getElementById('accel-z'),
     totalAccel: document.getElementById('total-accel'),
     
+    // Attitude
     roll: document.getElementById('roll'),
     pitch: document.getElementById('pitch'),
     yaw: document.getElementById('yaw'),
     angularRate: document.getElementById('angular-rate'),
     
+    // System status
     ignitionStatus: document.getElementById('ignition-status'),
     commStatus: document.getElementById('comm-status'),
     gpsSats: document.getElementById('gps-sats'),
     temperature: document.getElementById('temperature'),
     
+    // 3D Rocket stats
     rocketOrientation: document.getElementById('rocket-orientation'),
     
+    // Trajectory elements
     maxAltitude: document.getElementById('max-altitude'),
     downrangeDistance: document.getElementById('downrange-distance'),
     currentAltitude: document.getElementById('current-altitude'),
@@ -121,6 +139,7 @@ const domElements = {
     maxqAlt: document.getElementById('maxq-alt'),
     ignitionTime: document.getElementById('ignition-time'),
     
+    // GPS elements
     mapLat: document.getElementById('map-lat'),
     mapLon: document.getElementById('map-lon'),
     mapAlt: document.getElementById('map-alt'),
@@ -129,77 +148,73 @@ const domElements = {
     gpsAltitude: document.getElementById('gps-altitude'),
     gpsSatellites: document.getElementById('gps-satellites'),
     
+    // GPS Tracking status
+    gpsTrackingStatus: document.getElementById('gps-tracking-status'),
+    gpsLastUpdate: document.getElementById('gps-last-update'),
+    
+    // Panels
     performancePanel: document.getElementById('performance-panel'),
     trajectoryPanel: document.getElementById('trajectory-panel'),
     trackingPanel: document.getElementById('tracking-panel'),
     visualizationPanel: document.getElementById('visualization-panel'),
     
+    // Buttons
     resetButton: document.getElementById('reset-button'),
     downloadDataCSV: document.getElementById('download-data-csv'),
     downloadGraphsCSV: document.getElementById('download-graphs-csv'),
     downloadTrajectoryCSV: document.getElementById('download-trajectory-csv'),
     toggleSatellite: document.getElementById('toggle-satellite'),
     
+    // Log elements
     telemetryLog: document.getElementById('telemetry-log'),
     dataBuffer: document.getElementById('data-buffer'),
     
-    ignitionControlBtn: document.getElementById('ignition-control-btn'),
+    // Ignition elements
+    ignitionControlBtn: document.getElementById('ignition-system-btn'),
     ignitionOverlay: document.getElementById('ignition-overlay'),
     ignitionContainer: document.getElementById('ignition-container'),
     closeIgnitionBtn: document.getElementById('close-ignition-btn'),
     
+    // Refresh warning
     refreshWarning: document.getElementById('refreshWarning'),
     continueBtn: document.getElementById('continueBtn')
 };
-
-// ===== IGNITION BUTTON FIX =====
-function initializeIgnitionButton() {
-    const ignitionBtn = document.getElementById('ignition-control-btn');
-    if (ignitionBtn) {
-        console.log('Ignition button found, setting up click handler');
-        
-        const newBtn = ignitionBtn.cloneNode(true);
-        ignitionBtn.parentNode.replaceChild(newBtn, ignitionBtn);
-        
-        newBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('Ignition System button clicked!');
-            openIgnitionSystem();
-        });
-        
-        domElements.ignitionControlBtn = newBtn;
-        return true;
-    }
-    
-    console.error('Ignition button not found!');
-    return false;
-}
 
 // ===== INITIALIZATION =====
 function initializeApp() {
     console.log('Initializing Mission Control Dashboard...');
     
+    // Initialize state
     AppState.currentTime = new Date();
     AppState.lastUpdateTime = Date.now();
     
+    // Initialize charts with empty data
     initializeCharts();
-    initialize3DRocket();
-    initializeIgnitionSystem();
-    initializeGpsTracking();
-    initializeFirebaseTelemetry();
-    initializeEventListeners();
     
-    setTimeout(initializeIgnitionButton, 500);
+    // Initialize 3D rocket
+    initialize3DRocket();
+    
+    // Initialize ignition system
+    initializeIgnitionSystem();
+    
+    // Initialize GPS tracking
+    initializeGpsTracking();
+    
+    // Initialize Firebase Telemetry
+    initializeFirebaseTelemetry();
+    
+    // Initialize event listeners
+    initializeEventListeners();
     
     console.log('Mission Control Dashboard initialized');
     addLogEntry('SYSTEM', 'Mission Control initialized. Waiting for system connection...');
 }
 
-// ===== FIREBASE TELEMETRY =====
+// ===== FIREBASE TELEMETRY SYSTEM =====
 function initializeFirebaseTelemetry() {
     console.log('Initializing Firebase Telemetry System...');
     
+    // Check if Firebase Telemetry is available
     if (!window.firebaseTelemetryDatabase) {
         console.warn('Firebase Telemetry Database not available');
         addLogEntry('SYSTEM', 'Firebase Telemetry System: Database connection not available', 'warning');
@@ -209,7 +224,10 @@ function initializeFirebaseTelemetry() {
     FirebaseTelemetryState.isConnected = true;
     FirebaseTelemetryState.lastSavedTime = Date.now();
     
+    // Start saving telemetry to Firebase
     startFirebaseTelemetrySaving();
+    
+    // Start listening for live telemetry from Firebase
     startFirebaseTelemetryListening();
     
     console.log('Firebase Telemetry System initialized');
@@ -219,11 +237,13 @@ function initializeFirebaseTelemetry() {
 function startFirebaseTelemetrySaving() {
     if (!FirebaseTelemetryState.isConnected) return;
     
+    // Clear any existing interval
     if (FirebaseTelemetryState.saveInterval) {
         clearInterval(FirebaseTelemetryState.saveInterval);
         FirebaseTelemetryState.saveInterval = null;
     }
     
+    // Start saving interval
     FirebaseTelemetryState.saveInterval = setInterval(() => {
         saveTelemetryToFirebase();
     }, FirebaseTelemetryState.saveRate);
@@ -234,9 +254,11 @@ function startFirebaseTelemetrySaving() {
 function startFirebaseTelemetryListening() {
     if (!FirebaseTelemetryState.isConnected || !window.getLiveTelemetryFromFirebase) return;
     
+    // Start listening for live telemetry from Firebase
     const success = window.getLiveTelemetryFromFirebase((telemetryData) => {
         console.log('Received live telemetry from Firebase:', telemetryData);
         
+        // Process the telemetry data
         if (telemetryData && AppState.isSystemConnected) {
             processTelemetryData(telemetryData);
         }
@@ -257,14 +279,17 @@ async function saveTelemetryToFirebase() {
         return;
     }
     
+    // Check if we have telemetry data to save
     if (AppState.telemetryData.length === 0) {
         console.log('No telemetry data to save to Firebase');
         return;
     }
     
     try {
+        // Get the latest telemetry data
         const latestData = AppState.telemetryData[AppState.telemetryData.length - 1];
         
+        // Add metadata
         const telemetryToSave = {
             ...latestData,
             missionActive: AppState.missionActive,
@@ -277,6 +302,7 @@ async function saveTelemetryToFirebase() {
             source: 'mission_control_dashboard'
         };
         
+        // Save to Firebase
         const success = await window.saveTelemetryToFirebase(telemetryToSave);
         
         if (success) {
@@ -287,6 +313,22 @@ async function saveTelemetryToFirebase() {
         }
     } catch (error) {
         console.error('Error saving telemetry to Firebase:', error);
+    }
+}
+
+async function getTelemetryHistoryFromFirebase(limit = 100) {
+    if (!FirebaseTelemetryState.isConnected || !window.getTelemetryHistoryFromFirebase) {
+        console.warn('Firebase telemetry history not available');
+        return [];
+    }
+    
+    try {
+        const history = await window.getTelemetryHistoryFromFirebase(limit);
+        console.log(`Retrieved ${history.length} telemetry records from Firebase`);
+        return history;
+    } catch (error) {
+        console.error('Error getting telemetry history from Firebase:', error);
+        return [];
     }
 }
 
@@ -301,22 +343,27 @@ function stopFirebaseTelemetry() {
     addLogEntry('SYSTEM', 'Firebase Telemetry System stopped');
 }
 
-// ===== GPS TRACKING =====
+// ===== GPS LIVE TRACKING SYSTEM =====
 function initializeGpsTracking() {
     console.log('Initializing GPS tracking system...');
     
+    // Initialize GPS tracking state
     GpsTrackingState.isTracking = false;
     GpsTrackingState.updateInterval = null;
     GpsTrackingState.lastPosition = null;
-    GpsTrackingState.updateRate = 1000;
+    GpsTrackingState.updateRate = 1000; // 1 second updates
     GpsTrackingState.positionHistory = [];
     GpsTrackingState.maxHistorySize = 100;
     GpsTrackingState.lastUpdateTime = null;
+    
+    // Update GPS status display
+    updateGpsTrackingStatus(false);
     
     console.log('GPS tracking system initialized');
     addLogEntry('SYSTEM', 'GPS live tracking system initialized (1-second updates)');
 }
 
+// Start GPS tracking
 function startGpsTracking() {
     if (GpsTrackingState.isTracking) {
         console.log('GPS tracking already active');
@@ -327,11 +374,16 @@ function startGpsTracking() {
     GpsTrackingState.isTracking = true;
     GpsTrackingState.lastUpdateTime = Date.now();
     
+    // Update status display
+    updateGpsTrackingStatus(true);
+    
+    // Clear any existing interval
     if (GpsTrackingState.updateInterval) {
         clearInterval(GpsTrackingState.updateInterval);
         GpsTrackingState.updateInterval = null;
     }
     
+    // Start the update interval for live tracking
     GpsTrackingState.updateInterval = setInterval(() => {
         updateLiveGpsData();
     }, GpsTrackingState.updateRate);
@@ -339,11 +391,15 @@ function startGpsTracking() {
     addLogEntry('GPS', 'GPS live tracking started (1-second updates)', 'success');
 }
 
+// Stop GPS tracking
 function stopGpsTracking() {
     if (!GpsTrackingState.isTracking) return;
     
     console.log('Stopping GPS tracking...');
     GpsTrackingState.isTracking = false;
+    
+    // Update status display
+    updateGpsTrackingStatus(false);
     
     if (GpsTrackingState.updateInterval) {
         clearInterval(GpsTrackingState.updateInterval);
@@ -353,34 +409,62 @@ function stopGpsTracking() {
     addLogEntry('GPS', 'GPS live tracking stopped');
 }
 
+// Update GPS tracking status display
+function updateGpsTrackingStatus(isActive) {
+    if (domElements.gpsTrackingStatus) {
+        if (isActive) {
+            domElements.gpsTrackingStatus.textContent = 'LIVE TRACKING ACTIVE';
+            domElements.gpsTrackingStatus.setAttribute('data-status', 'nominal');
+        } else {
+            domElements.gpsTrackingStatus.textContent = 'TRACKING INACTIVE';
+            domElements.gpsTrackingStatus.setAttribute('data-status', 'critical');
+        }
+    }
+}
+
+// Update live GPS data every second
 function updateLiveGpsData() {
     if (!AppState.communicationEstablished || !AppState.isSystemConnected) {
         console.log('Cannot update GPS: System not connected');
         return;
     }
     
+    // Check if we have telemetry data
     if (AppState.telemetryData.length === 0) {
         console.log('No telemetry data available for GPS update');
         return;
     }
     
+    // Get the latest telemetry data
     const latestData = AppState.telemetryData[AppState.telemetryData.length - 1];
     
+    // Check if we have GPS coordinates
     if (latestData.latitude !== undefined && latestData.longitude !== undefined) {
+        // Update the GPS position
         updateGPSPosition(latestData);
+        
+        // Update GPS coordinates display
         updateGpsCoordinatesDisplay(latestData);
+        
+        // Update last update time
+        updateGpsLastUpdateTime();
+        
+        // Add to position history
         addToPositionHistory(latestData);
     } else {
         console.log('No valid GPS coordinates in latest data');
     }
 }
 
+// Update GPS position on map
 function updateGPSPosition(data) {
     if (data.latitude !== undefined && data.longitude !== undefined && AppState.googleMap) {
         const position = { lat: data.latitude, lng: data.longitude };
         
+        // Store last position
         GpsTrackingState.lastPosition = position;
         
+        // Update flight marker
         if (!AppState.flightMarker) {
             AppState.flightMarker = new google.maps.Marker({
                 position: position,
@@ -399,6 +483,7 @@ function updateGPSPosition(data) {
             AppState.flightMarker.setPosition(position);
         }
         
+        // Update flight path
         if (!AppState.flightPath) {
             AppState.flightPath = new google.maps.Polyline({
                 path: [AppState.launchSitePosition, position],
@@ -412,23 +497,28 @@ function updateGPSPosition(data) {
             const path = AppState.flightPath.getPath();
             path.push(position);
             
+            // Keep path length reasonable
             if (path.getLength() > GpsTrackingState.maxHistorySize) {
                 path.removeAt(0);
             }
         }
         
+        // Center map on rocket if tracking panel is active
         if (AppState.activePanel === 'tracking') {
             AppState.googleMap.panTo(position);
         }
         
+        // Update map coordinates overlay
         if (domElements.mapLat) domElements.mapLat.textContent = `${data.latitude.toFixed(6)}°`;
         if (domElements.mapLon) domElements.mapLon.textContent = `${data.longitude.toFixed(6)}°`;
         if (domElements.mapAlt) domElements.mapAlt.textContent = `${data.altitude?.toFixed(0) || '--'} m`;
     }
 }
 
+// Update GPS coordinates display
 function updateGpsCoordinatesDisplay(data) {
     if (data.latitude !== undefined && data.longitude !== undefined) {
+        // Update primary telemetry
         if (domElements.latitude) {
             domElements.latitude.textContent = formatCoordinate(data.latitude, true);
         }
@@ -439,6 +529,7 @@ function updateGpsCoordinatesDisplay(data) {
             domElements.altitude.textContent = `${data.altitude?.toFixed(0) || '--'} m`;
         }
         
+        // Update tracking panel GPS display
         if (AppState.activePanel === 'tracking') {
             if (domElements.gpsLatitude) {
                 domElements.gpsLatitude.textContent = formatCoordinate(data.latitude, true);
@@ -454,10 +545,28 @@ function updateGpsCoordinatesDisplay(data) {
             }
         }
         
+        // Log GPS update
         console.log(`GPS Update: ${data.latitude.toFixed(6)}, ${data.longitude.toFixed(6)}, Alt: ${data.altitude?.toFixed(0) || '--'}m`);
     }
 }
 
+// Update GPS last update time
+function updateGpsLastUpdateTime() {
+    GpsTrackingState.lastUpdateTime = Date.now();
+    
+    if (domElements.gpsLastUpdate) {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('en-IN', {
+            hour12: false,
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+        domElements.gpsLastUpdate.textContent = `Last Update: ${timeString}`;
+    }
+}
+
+// Add position to history
 function addToPositionHistory(data) {
     if (data.latitude !== undefined && data.longitude !== undefined) {
         const position = {
@@ -469,22 +578,27 @@ function addToPositionHistory(data) {
         
         GpsTrackingState.positionHistory.push(position);
         
+        // Keep history size manageable
         if (GpsTrackingState.positionHistory.length > GpsTrackingState.maxHistorySize) {
             GpsTrackingState.positionHistory.shift();
         }
     }
 }
 
-// ===== IGNITION SYSTEM =====
+// ===== IGNITION SYSTEM FUNCTIONS =====
 function initializeIgnitionSystem() {
     console.log('Initializing ignition system...');
     
+    // Load saved ignition state
     loadIgnitionState();
     
+    // Check if countdown is active on page load
     if (IgnitionState.countdownActive) {
         if (IgnitionState.remainingSeconds > 0) {
+            // Show warning if countdown is active
             showRefreshWarning();
         } else {
+            // Clear expired countdown
             clearIgnitionState();
         }
     }
@@ -493,26 +607,31 @@ function initializeIgnitionSystem() {
     addLogEntry('SYSTEM', 'Ignition control system initialized');
 }
 
+// Show refresh warning
 function showRefreshWarning() {
     if (domElements.refreshWarning) {
         domElements.refreshWarning.classList.add('active');
     }
 }
 
+// Hide refresh warning
 function hideRefreshWarning() {
     if (domElements.refreshWarning) {
         domElements.refreshWarning.classList.remove('active');
     }
 }
 
+// Open ignition system (full-screen overlay)
 function openIgnitionSystem() {
     console.log('Opening ignition control system...');
     
+    // Show ignition overlay
     const ignitionOverlay = document.getElementById('ignition-overlay');
     if (ignitionOverlay) {
         ignitionOverlay.classList.add('active');
         document.body.style.overflow = 'hidden';
         
+        // Load the appropriate view
         if (!IgnitionState.userAuthenticated) {
             loadIgnitionLoginView();
         } else {
@@ -523,6 +642,7 @@ function openIgnitionSystem() {
     addLogEntry('SYSTEM', 'Ignition control system opened');
 }
 
+// Close ignition system
 function closeIgnitionSystem() {
     console.log('Closing ignition control system...');
     
@@ -531,6 +651,7 @@ function closeIgnitionSystem() {
         ignitionOverlay.classList.remove('active');
         document.body.style.overflow = 'auto';
         
+        // Clear the container
         const container = document.getElementById('ignition-container');
         if (container) {
             container.innerHTML = '';
@@ -540,6 +661,7 @@ function closeIgnitionSystem() {
     addLogEntry('SYSTEM', 'Ignition control system closed');
 }
 
+// Load ignition login view
 function loadIgnitionLoginView() {
     const container = document.getElementById('ignition-container');
     if (!container) return;
@@ -592,10 +714,13 @@ function loadIgnitionLoginView() {
         </div>
     `;
     
+    // Add event listeners for login form
     addIgnitionLoginListeners();
 }
 
+// Add event listeners for ignition login
 function addIgnitionLoginListeners() {
+    // Toggle password visibility
     const togglePasswordBtn = document.getElementById('ignition-toggle-password');
     if (togglePasswordBtn) {
         togglePasswordBtn.addEventListener('click', function() {
@@ -606,6 +731,7 @@ function addIgnitionLoginListeners() {
         });
     }
     
+    // Reset button
     const resetBtn = document.getElementById('ignition-reset-btn');
     if (resetBtn) {
         resetBtn.addEventListener('click', function() {
@@ -614,6 +740,7 @@ function addIgnitionLoginListeners() {
         });
     }
     
+    // Login button
     const loginBtn = document.getElementById('ignition-login-btn');
     if (loginBtn) {
         loginBtn.addEventListener('click', function() {
@@ -621,26 +748,31 @@ function addIgnitionLoginListeners() {
             const password = document.getElementById('ignition-password').value;
             
             if (username === '2315046' && password === '2315046') {
+                // Show success message
                 const successElement = document.getElementById('ignition-success');
                 const errorElement = document.getElementById('ignition-error');
                 
                 if (errorElement) errorElement.classList.remove('active');
                 if (successElement) successElement.classList.add('active');
                 
+                // Authenticate user
                 IgnitionState.userAuthenticated = true;
                 saveIgnitionState();
                 
+                // Show access granted notification
                 showIgnitionNotification('access-granted', {
                     user: username,
                     time: new Date().toLocaleTimeString()
                 });
                 
+                // Load dashboard after delay
                 setTimeout(() => {
                     hideIgnitionNotification('access-granted');
                     loadIgnitionDashboardView();
                 }, 2500);
                 
             } else {
+                // Show error message
                 const errorElement = document.getElementById('ignition-error');
                 const successElement = document.getElementById('ignition-success');
                 
@@ -650,6 +782,7 @@ function addIgnitionLoginListeners() {
         });
     }
     
+    // Also allow login on Enter key
     const usernameInput = document.getElementById('ignition-username');
     const passwordInput = document.getElementById('ignition-password');
     
@@ -668,6 +801,7 @@ function addIgnitionLoginListeners() {
     }
 }
 
+// Load ignition dashboard view
 function loadIgnitionDashboardView() {
     const container = document.getElementById('ignition-container');
     if (!container) return;
@@ -695,7 +829,9 @@ function loadIgnitionDashboardView() {
             </div>
             
             <div class="ignition-main-content">
+                <!-- Left Column -->
                 <div class="ignition-left-column">
+                    <!-- Sequence Panel -->
                     <div class="ignition-panel" id="ignition-sequence-panel">
                         <h3 class="ignition-panel-title">IGNITION SEQUENCE</h3>
                         <div class="ignition-sequence-item">
@@ -713,6 +849,7 @@ function loadIgnitionDashboardView() {
                         <button class="ignition-sequence-btn" id="ignition-initiate-btn" disabled>INITIATE SEQUENCE</button>
                     </div>
                     
+                    <!-- Event Log Panel -->
                     <div class="ignition-panel">
                         <h3 class="ignition-panel-title">EVENT LOG</h3>
                         <div class="ignition-event-log" id="ignition-event-log">
@@ -732,7 +869,9 @@ function loadIgnitionDashboardView() {
                     </div>
                 </div>
                 
+                <!-- Right Column -->
                 <div class="ignition-right-column">
+                    <!-- Countdown Panel (hidden by default) -->
                     <div class="ignition-panel ignition-countdown-panel" id="ignition-countdown-panel" style="display: none;">
                         <h3 class="ignition-panel-title">COUNTDOWN SEQUENCE</h3>
                         <div class="ignition-countdown-display" id="ignition-countdown-display">00:00:00</div>
@@ -756,6 +895,7 @@ function loadIgnitionDashboardView() {
                         </div>
                     </div>
                     
+                    <!-- Mission Complete Panel (hidden by default) -->
                     <div class="ignition-panel ignition-countdown-panel" id="ignition-mission-complete-panel" style="display: none;">
                         <div class="ignition-mission-complete-icon">🚀</div>
                         <div class="ignition-notification-title">MISSION COMPLETE</div>
@@ -781,10 +921,13 @@ function loadIgnitionDashboardView() {
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- REMOVED: Quick Controls Panel (as requested) -->
                 </div>
             </div>
         </div>
         
+        <!-- Notifications -->
         <div class="ignition-notification" id="ignition-access-notification">
             <div class="ignition-access-icon">✓</div>
             <div class="ignition-notification-title">ACCESS GRANTED</div>
@@ -817,15 +960,21 @@ function loadIgnitionDashboardView() {
         </div>
     `;
     
+    // Add event listeners for dashboard
     addIgnitionDashboardListeners();
+    
+    // Update sequence buttons based on saved state
     updateIgnitionSequenceButtons();
     
+    // If countdown was active, resume it
     if (IgnitionState.countdownActive) {
         resumeIgnitionCountdown();
     }
 }
 
+// Add event listeners for ignition dashboard
 function addIgnitionDashboardListeners() {
+    // Sequence checkboxes
     const checkboxes = ['ignition-check1', 'ignition-check2', 'ignition-check3'];
     checkboxes.forEach(id => {
         const checkbox = document.getElementById(id);
@@ -836,6 +985,7 @@ function addIgnitionDashboardListeners() {
                 this.classList.toggle('checked');
                 const stepName = this.parentElement.querySelector('span').textContent.trim();
                 
+                // Update state
                 if (id === 'ignition-check1') {
                     IgnitionState.sequenceSteps.preIgnition = this.classList.contains('checked');
                 } else if (id === 'ignition-check2') {
@@ -844,9 +994,13 @@ function addIgnitionDashboardListeners() {
                     IgnitionState.sequenceSteps.fireEnable = this.classList.contains('checked');
                 }
                 
+                // Update Fire Enable status
                 updateIgnitionFireEnableStatus();
+                
+                // Update initiate button
                 updateIgnitionInitiateButton();
                 
+                // Add log entry
                 if (this.classList.contains('checked')) {
                     addIgnitionLogEntry(`Sequence step completed: ${stepName}`);
                 } else {
@@ -858,9 +1012,11 @@ function addIgnitionDashboardListeners() {
         }
     });
     
+    // Initiate sequence button
     const initiateBtn = document.getElementById('ignition-initiate-btn');
     if (initiateBtn) {
         initiateBtn.addEventListener('click', function() {
+            // Check if all steps are completed
             const allChecked = checkboxes.every(id => {
                 const checkbox = document.getElementById(id);
                 return checkbox && checkbox.classList.contains('checked');
@@ -872,10 +1028,13 @@ function addIgnitionDashboardListeners() {
             }
             
             addIgnitionLogEntry("All sequence steps completed");
+            
+            // Show confirmation notification
             showIgnitionNotification('confirmation');
         });
     }
     
+    // Confirmation buttons
     const confirmBtn = document.getElementById('ignition-confirm-btn');
     if (confirmBtn) {
         confirmBtn.addEventListener('click', function() {
@@ -883,6 +1042,7 @@ function addIgnitionDashboardListeners() {
             addIgnitionLogEntry("Ignition sequence confirmed");
             addIgnitionLogEntry("Initiating countdown sequence");
             
+            // Hide sequence panel, show countdown panel
             document.getElementById('ignition-sequence-panel').style.display = 'none';
             document.getElementById('ignition-countdown-panel').style.display = 'block';
         });
@@ -896,6 +1056,7 @@ function addIgnitionDashboardListeners() {
         });
     }
     
+    // Countdown controls
     const startCountdownBtn = document.getElementById('ignition-start-countdown-btn');
     if (startCountdownBtn) {
         startCountdownBtn.addEventListener('click', function() {
@@ -921,8 +1082,11 @@ function addIgnitionDashboardListeners() {
             addIgnitionLogEntry("Countdown cancelled");
         });
     }
+    
+    // REMOVED: Quick Control buttons (Abort, Pause, Override)
 }
 
+// Update Fire Enable status
 function updateIgnitionFireEnableStatus() {
     const fireEnable = document.getElementById('ignition-check3');
     if (!fireEnable) return;
@@ -941,6 +1105,7 @@ function updateIgnitionFireEnableStatus() {
     }
 }
 
+// Update initiate button
 function updateIgnitionInitiateButton() {
     const initiateBtn = document.getElementById('ignition-initiate-btn');
     if (!initiateBtn) return;
@@ -956,6 +1121,7 @@ function updateIgnitionInitiateButton() {
     }
 }
 
+// Update sequence buttons based on saved state
 function updateIgnitionSequenceButtons() {
     if (IgnitionState.sequenceSteps.preIgnition) {
         const check1 = document.getElementById('ignition-check1');
@@ -978,6 +1144,7 @@ function updateIgnitionSequenceButtons() {
     updateIgnitionInitiateButton();
 }
 
+// Show ignition notification
 function showIgnitionNotification(type, data = {}) {
     let notification;
     
@@ -1006,6 +1173,7 @@ function showIgnitionNotification(type, data = {}) {
     }
 }
 
+// Hide ignition notification
 function hideIgnitionNotification(type) {
     let notification;
     
@@ -1028,6 +1196,7 @@ function hideIgnitionNotification(type) {
     }
 }
 
+// Start ignition countdown
 function startIgnitionCountdown(totalSeconds) {
     IgnitionState.countdownActive = true;
     IgnitionState.countdownPaused = false;
@@ -1037,14 +1206,18 @@ function startIgnitionCountdown(totalSeconds) {
     updateIgnitionCountdownDisplay();
     addIgnitionLogEntry(`Countdown started: ${formatIgnitionTime(totalSeconds)}`);
     
+    // Save state
     saveIgnitionState();
     
+    // Start countdown
     IgnitionState.countdownInterval = setInterval(() => {
         IgnitionState.remainingSeconds--;
         updateIgnitionCountdownDisplay();
         
+        // Save updated state
         saveIgnitionState();
         
+        // Last 10 seconds warning
         if (IgnitionState.remainingSeconds <= 10) {
             const countdownDisplay = document.getElementById('ignition-countdown-display');
             if (countdownDisplay) {
@@ -1052,11 +1225,13 @@ function startIgnitionCountdown(totalSeconds) {
                 countdownDisplay.style.textShadow = '0 0 10px rgba(255, 85, 85, 0.5)';
             }
             
+            // Add T-minus announcement
             if (IgnitionState.remainingSeconds <= 5 && IgnitionState.remainingSeconds > 0) {
                 addIgnitionLogEntry(`T-minus ${IgnitionState.remainingSeconds} seconds...`);
             }
         }
         
+        // Countdown complete
         if (IgnitionState.remainingSeconds <= 0) {
             clearInterval(IgnitionState.countdownInterval);
             IgnitionState.countdownActive = false;
@@ -1064,17 +1239,20 @@ function startIgnitionCountdown(totalSeconds) {
             
             addIgnitionLogEntry("Countdown complete! Ignition sequence finished!");
             
+            // Trigger Firebase ignition
             triggerFirebaseIgnition().then(ignitionSuccess => {
                 if (!ignitionSuccess) {
                     addIgnitionLogEntry("WARNING: Firebase ignition command failed!", "warning");
                 }
                 
+                // Show ignition notification
                 const message = ignitionSuccess 
                     ? "Countdown complete. Rocket ignition initiated via Firebase."
                     : "Countdown complete. WARNING: Firebase ignition command failed!";
                 
                 showIgnitionNotification('ignition', { message: message });
                 
+                // After ignition notification, show mission complete panel
                 setTimeout(() => {
                     hideIgnitionNotification('ignition');
                     document.getElementById('ignition-countdown-panel').style.display = 'none';
@@ -1083,6 +1261,7 @@ function startIgnitionCountdown(totalSeconds) {
                     if (missionCompletePanel) {
                         missionCompletePanel.style.display = 'block';
                         
+                        // Set mission completion stats
                         const launchTime = document.getElementById('ignition-launch-time');
                         const completionTime = document.getElementById('ignition-completion-time');
                         
@@ -1099,17 +1278,20 @@ function startIgnitionCountdown(totalSeconds) {
                             });
                         }
                         
+                        // Reset countdown display style
                         const countdownDisplay = document.getElementById('ignition-countdown-display');
                         if (countdownDisplay) {
                             countdownDisplay.style.color = '';
                             countdownDisplay.style.textShadow = '';
                         }
                         
+                        // Update main dashboard ignition status
                         updateMainDashboardIgnitionStatus(true);
                         
                         addIgnitionLogEntry("Mission complete. All systems nominal.");
                     }
                     
+                    // Clear saved state
                     clearIgnitionState();
                     
                 }, 3000);
@@ -1118,6 +1300,7 @@ function startIgnitionCountdown(totalSeconds) {
     }, 1000);
 }
 
+// Resume ignition countdown
 function resumeIgnitionCountdown() {
     if (!IgnitionState.countdownActive || !IgnitionState.countdownPaused) return;
     
@@ -1125,17 +1308,21 @@ function resumeIgnitionCountdown() {
     updateIgnitionCountdownDisplay();
     addIgnitionLogEntry(`Countdown resumed: ${formatIgnitionTime(IgnitionState.remainingSeconds)}`);
     
+    // Hide sequence panel, show countdown panel
     const sequencePanel = document.getElementById('ignition-sequence-panel');
     const countdownPanel = document.getElementById('ignition-countdown-panel');
     if (sequencePanel) sequencePanel.style.display = 'none';
     if (countdownPanel) countdownPanel.style.display = 'block';
     
+    // Resume countdown
     IgnitionState.countdownInterval = setInterval(() => {
         IgnitionState.remainingSeconds--;
         updateIgnitionCountdownDisplay();
         
+        // Save updated state
         saveIgnitionState();
         
+        // Last 10 seconds warning
         if (IgnitionState.remainingSeconds <= 10) {
             const countdownDisplay = document.getElementById('ignition-countdown-display');
             if (countdownDisplay) {
@@ -1143,11 +1330,13 @@ function resumeIgnitionCountdown() {
                 countdownDisplay.style.textShadow = '0 0 10px rgba(255, 85, 85, 0.5)';
             }
             
+            // Add T-minus announcement
             if (IgnitionState.remainingSeconds <= 10 && IgnitionState.remainingSeconds > 0) {
                 addIgnitionLogEntry(`T-minus ${IgnitionState.remainingSeconds} seconds...`);
             }
         }
         
+        // Countdown complete
         if (IgnitionState.remainingSeconds <= 0) {
             clearInterval(IgnitionState.countdownInterval);
             IgnitionState.countdownActive = false;
@@ -1155,17 +1344,20 @@ function resumeIgnitionCountdown() {
             
             addIgnitionLogEntry("Countdown complete! Ignition sequence finished!");
             
+            // Trigger Firebase ignition
             triggerFirebaseIgnition().then(ignitionSuccess => {
                 if (!ignitionSuccess) {
                     addIgnitionLogEntry("WARNING: Firebase ignition command failed!", "warning");
                 }
                 
+                // Show ignition notification
                 const message = ignitionSuccess 
                     ? "Countdown complete. Rocket ignition initiated via Firebase."
                     : "Countdown complete. WARNING: Firebase ignition command failed!";
                 
                 showIgnitionNotification('ignition', { message: message });
                 
+                // After ignition notification, show mission complete panel
                 setTimeout(() => {
                     hideIgnitionNotification('ignition');
                     document.getElementById('ignition-countdown-panel').style.display = 'none';
@@ -1174,6 +1366,7 @@ function resumeIgnitionCountdown() {
                     if (missionCompletePanel) {
                         missionCompletePanel.style.display = 'block';
                         
+                        // Set mission completion stats
                         const launchTime = document.getElementById('ignition-launch-time');
                         const completionTime = document.getElementById('ignition-completion-time');
                         
@@ -1190,17 +1383,20 @@ function resumeIgnitionCountdown() {
                             });
                         }
                         
+                        // Reset countdown display style
                         const countdownDisplay = document.getElementById('ignition-countdown-display');
                         if (countdownDisplay) {
                             countdownDisplay.style.color = '';
                             countdownDisplay.style.textShadow = '';
                         }
                         
+                        // Update main dashboard ignition status
                         updateMainDashboardIgnitionStatus(true);
                         
                         addIgnitionLogEntry("Mission complete. All systems nominal.");
                     }
                     
+                    // Clear saved state
                     clearIgnitionState();
                     
                 }, 3000);
@@ -1209,6 +1405,7 @@ function resumeIgnitionCountdown() {
     }, 1000);
 }
 
+// Pause ignition countdown
 function pauseIgnitionCountdown() {
     if (!IgnitionState.countdownActive || IgnitionState.countdownPaused) return;
     
@@ -1217,6 +1414,7 @@ function pauseIgnitionCountdown() {
     saveIgnitionState();
 }
 
+// Cancel ignition countdown
 function cancelIgnitionCountdown() {
     clearInterval(IgnitionState.countdownInterval);
     IgnitionState.countdownActive = false;
@@ -1230,14 +1428,17 @@ function cancelIgnitionCountdown() {
         countdownDisplay.style.textShadow = '';
     }
     
+    // Show sequence panel, hide countdown panel
     const sequencePanel = document.getElementById('ignition-sequence-panel');
     const countdownPanel = document.getElementById('ignition-countdown-panel');
     if (sequencePanel) sequencePanel.style.display = 'block';
     if (countdownPanel) countdownPanel.style.display = 'none';
     
+    // Clear saved state
     clearIgnitionState();
 }
 
+// Update countdown display
 function updateIgnitionCountdownDisplay() {
     const hours = Math.floor(IgnitionState.remainingSeconds / 3600);
     const minutes = Math.floor((IgnitionState.remainingSeconds % 3600) / 60);
@@ -1250,6 +1451,7 @@ function updateIgnitionCountdownDisplay() {
     }
 }
 
+// Format time for display
 function formatIgnitionTime(seconds) {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
@@ -1257,6 +1459,7 @@ function formatIgnitionTime(seconds) {
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
+// Reset ignition sequence
 function resetIgnitionSequence() {
     const checkboxes = ['ignition-check1', 'ignition-check2', 'ignition-check3'];
     checkboxes.forEach(id => {
@@ -1267,15 +1470,18 @@ function resetIgnitionSequence() {
         }
     });
     
+    // Reset state
     IgnitionState.sequenceSteps = {
         preIgnition: false,
         armCommand: false,
         fireEnable: false
     };
     
+    // Update buttons
     updateIgnitionFireEnableStatus();
     updateIgnitionInitiateButton();
     
+    // Show sequence panel, hide others
     document.getElementById('ignition-sequence-panel').style.display = 'block';
     document.getElementById('ignition-countdown-panel').style.display = 'none';
     document.getElementById('ignition-mission-complete-panel').style.display = 'none';
@@ -1283,6 +1489,7 @@ function resetIgnitionSequence() {
     saveIgnitionState();
 }
 
+// Add log entry to ignition system
 function addIgnitionLogEntry(message, type = "normal") {
     const log = document.getElementById('ignition-event-log');
     if (!log) return;
@@ -1304,6 +1511,7 @@ function addIgnitionLogEntry(message, type = "normal") {
     
     entry.innerHTML = `<span class="ignition-log-time">${timeString}</span> <span>${message}</span>`;
     
+    // Force white text for log entries
     const logText = entry.querySelector('span:last-child');
     if (logText) {
         logText.style.color = '#ffffff';
@@ -1311,14 +1519,17 @@ function addIgnitionLogEntry(message, type = "normal") {
     
     log.insertBefore(entry, log.firstChild);
     
+    // Keep log to 15 entries max
     if (log.children.length > 15) {
         log.removeChild(log.lastChild);
     }
 }
 
+// Trigger Firebase ignition
 async function triggerFirebaseIgnition() {
     if (window.firebaseIgnitionDatabase) {
         try {
+            // Import Firebase Database functions
             const { set, ref } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js");
             const ignitionRef = ref(window.firebaseIgnitionDatabase, "ignition");
             
@@ -1333,6 +1544,7 @@ async function triggerFirebaseIgnition() {
             addIgnitionLogEntry("Fire command sent to Firebase: " + JSON.stringify(ignitionData));
             console.log("Firebase ignition triggered:", ignitionData);
             
+            // Log analytics event
             if (window.firebaseIgnitionAnalytics && window.firebaseIgnitionLogEvent) {
                 window.firebaseIgnitionLogEvent(window.firebaseIgnitionAnalytics, 'ignition_triggered', {
                     mission_id: 'eklavya_launch',
@@ -1354,6 +1566,7 @@ async function triggerFirebaseIgnition() {
     }
 }
 
+// Update main dashboard ignition status
 function updateMainDashboardIgnitionStatus(ignited) {
     if (domElements.ignitionStatus) {
         domElements.ignitionStatus.textContent = ignited ? 'IGNITED' : 'NOT IGNITED';
@@ -1373,6 +1586,7 @@ function updateMainDashboardIgnitionStatus(ignited) {
     }
 }
 
+// Save ignition state to localStorage
 function saveIgnitionState() {
     const state = {
         userAuthenticated: IgnitionState.userAuthenticated,
@@ -1386,6 +1600,7 @@ function saveIgnitionState() {
     localStorage.setItem('ignitionState', JSON.stringify(state));
 }
 
+// Load ignition state from localStorage
 function loadIgnitionState() {
     const savedState = localStorage.getItem('ignitionState');
     if (savedState) {
@@ -1399,6 +1614,7 @@ function loadIgnitionState() {
     }
 }
 
+// Clear ignition state from localStorage
 function clearIgnitionState() {
     localStorage.removeItem('ignitionState');
     Object.assign(IgnitionState, {
@@ -1417,8 +1633,9 @@ function clearIgnitionState() {
     });
 }
 
-// ===== CHARTS =====
+// ===== CHART INITIALIZATION =====
 function initializeCharts() {
+    // Common chart configuration
     const commonChartOptions = {
         responsive: true,
         maintainAspectRatio: false,
@@ -1455,17 +1672,18 @@ function initializeCharts() {
         },
         elements: {
             line: {
-                tension: 0.4,
+                tension: 0.4, // Smooth curves
                 borderWidth: 2,
                 fill: true
             },
             point: {
-                radius: 0,
-                hoverRadius: 6
+                radius: 0, // Hide points for cleaner line
+                hoverRadius: 6 // Show on hover
             }
         }
     };
 
+    // Acceleration Chart - Line chart with multiple datasets
     const accelCtx = document.getElementById('accelerationChart').getContext('2d');
     accelerationChart = new Chart(accelCtx, {
         type: 'line',
@@ -1479,7 +1697,7 @@ function initializeCharts() {
                     backgroundColor: 'rgba(239, 68, 68, 0.1)',
                     borderWidth: 2,
                     tension: 0.4,
-                    fill: false,
+                    fill: false, // No fill for individual lines
                     pointRadius: 0
                 },
                 { 
@@ -1533,6 +1751,7 @@ function initializeCharts() {
         }
     });
 
+    // Temperature Chart - Changed from scatter to line chart
     const tempCtx = document.getElementById('temperatureChart').getContext('2d');
     temperatureChart = new Chart(tempCtx, {
         type: 'line',
@@ -1590,6 +1809,7 @@ function initializeCharts() {
         }
     });
 
+    // Altitude Chart
     const altitudeCtx = document.getElementById('altitudeChart').getContext('2d');
     altitudeChart = new Chart(altitudeCtx, {
         type: 'line',
@@ -1622,6 +1842,7 @@ function initializeCharts() {
         }
     });
 
+    // Pressure Chart - Changed to line chart with altitude on x-axis
     const pressureCtx = document.getElementById('pressureChart').getContext('2d');
     pressureChart = new Chart(pressureCtx, {
         type: 'line',
@@ -1679,6 +1900,7 @@ function initializeCharts() {
         }
     });
 
+    // Trajectory Chart
     const trajectoryCtx = document.getElementById('trajectoryChart').getContext('2d');
     trajectoryChart = new Chart(trajectoryCtx, {
         type: 'line',
@@ -1747,7 +1969,7 @@ function initializeCharts() {
     });
 }
 
-// ===== SYSTEM CONNECTION =====
+// ===== SYSTEM CONNECTION FUNCTIONS =====
 function connectToSystem() {
     if (AppState.isSystemConnected) {
         addLogEntry('SYSTEM', 'System already connected', 'warning');
@@ -1756,13 +1978,15 @@ function connectToSystem() {
     
     addLogEntry('SYSTEM', 'Attempting to connect to rocket system...');
     
+    // Simulate connection attempt
     setTimeout(() => {
-        const success = Math.random() > 0.3;
+        const success = Math.random() > 0.3; // 70% success rate
         
         if (success) {
             AppState.isSystemConnected = true;
             addLogEntry('SYSTEM', 'System connection established', 'success');
             
+            // Now start sensor initialization
             initializeSensors();
         } else {
             addLogEntry('ERROR', 'Failed to connect to system. Check connections and try again.', 'error');
@@ -1776,6 +2000,7 @@ function disconnectFromSystem() {
         return;
     }
     
+    // Reset all sensor states
     Object.keys(AppState.sensors).forEach(key => {
         AppState.sensors[key].initialized = false;
     });
@@ -1783,18 +2008,26 @@ function disconnectFromSystem() {
     AppState.communicationEstablished = false;
     AppState.isSystemConnected = false;
     
+    // Stop GPS tracking
     stopGpsTracking();
+    
+    // Stop Firebase telemetry
     stopFirebaseTelemetry();
     
+    // Reset telemetry data
     AppState.telemetryData = [];
     AppState.chartData = {
         altitude: [], pressure: [], temperature: [], time: [],
         accelX: [], accelY: [], accelZ: [], totalAccel: []
     };
     
+    // Reset charts
     resetCharts();
+    
+    // Reset displays
     resetAllDisplays();
     
+    // Update comm status display
     if (domElements.commStatus) {
         domElements.commStatus.textContent = 'NO CONNECTION';
         domElements.commStatus.setAttribute('data-status', 'critical');
@@ -1803,7 +2036,7 @@ function disconnectFromSystem() {
     addLogEntry('SYSTEM', 'System disconnected. All sensors and communication reset.');
 }
 
-// ===== SENSORS =====
+// ===== SENSOR INITIALIZATION =====
 function initializeSensors() {
     if (!AppState.isSystemConnected) {
         addLogEntry('ERROR', 'Cannot initialize sensors: System not connected', 'error');
@@ -1813,25 +2046,29 @@ function initializeSensors() {
     console.log('Starting sensor initialization...');
     addLogEntry('SYSTEM', 'Starting sensor initialization sequence...');
     
+    // Check each sensor one by one
     const sensorNames = Object.keys(AppState.sensors);
     let initializedCount = 0;
     
     sensorNames.forEach((sensorKey, index) => {
         const sensor = AppState.sensors[sensorKey];
         
+        // Simulate sensor initialization with delay
         setTimeout(() => {
+            // Check if system is still connected
             if (!AppState.isSystemConnected) {
                 addLogEntry('WARNING', `Sensor initialization interrupted: System disconnected`, 'warning');
                 return;
             }
             
-            const success = Math.random() > 0.3;
+            const success = Math.random() > 0.3; // 70% success rate for each sensor
             
             if (success) {
                 sensor.initialized = true;
                 initializedCount++;
                 addLogEntry('SENSOR', `${sensor.name} initialized successfully`, 'success');
                 
+                // Update specific status based on sensor
                 if (sensorKey === 'mpu6050') {
                     updateDisplayStatus('MPU6050 IMU ready');
                 } else if (sensorKey === 'bmp280') {
@@ -1845,10 +2082,11 @@ function initializeSensors() {
                 addLogEntry('WARNING', `${sensor.name} initialization failed`, 'warning');
             }
             
+            // Check if all sensors are initialized
             if (index === sensorNames.length - 1) {
                 checkAllSensorsInitialized();
             }
-        }, index * 1500);
+        }, index * 1500); // 1.5 seconds between each sensor initialization
     });
 }
 
@@ -1858,12 +2096,14 @@ function checkAllSensorsInitialized() {
     if (allInitialized) {
         addLogEntry('SYSTEM', 'All sensors initialized successfully', 'success');
         
+        // Now establish communication
         setTimeout(() => {
             establishCommunication();
         }, 1000);
     } else {
         addLogEntry('WARNING', 'Some sensors failed to initialize. Check hardware connections.', 'warning');
         
+        // Ask user if they want to retry
         if (confirm('Some sensors failed to initialize. Would you like to retry?')) {
             setTimeout(() => {
                 initializeSensors();
@@ -1880,52 +2120,66 @@ function establishCommunication() {
     
     addLogEntry('SYSTEM', 'Establishing communication with rocket...');
     
+    // Simulate communication establishment
     setTimeout(() => {
-        const success = Math.random() > 0.2;
+        const success = Math.random() > 0.2; // 80% success rate
         
         if (success) {
             AppState.communicationEstablished = true;
             addLogEntry('SYSTEM', 'Communication established with rocket', 'success');
             
+            // Update comm status display
             if (domElements.commStatus) {
                 domElements.commStatus.textContent = 'COMM ESTABLISHED';
                 domElements.commStatus.setAttribute('data-status', 'nominal');
             }
             
+            // Start GPS tracking
             startGpsTracking();
+            
+            // Start Firebase telemetry
             initializeFirebaseTelemetry();
             
+            // Ready to receive telemetry
             addLogEntry('SYSTEM', 'All systems ready. Waiting for telemetry data...');
             
+            // Enable telemetry input
             enableTelemetryReception();
         } else {
             addLogEntry('ERROR', 'Failed to establish communication. Retrying...', 'error');
             
+            // Retry after 3 seconds
             setTimeout(establishCommunication, 3000);
         }
     }, 2000);
 }
 
 function updateDisplayStatus(message) {
+    // This function can be used to update UI with sensor status
     console.log('Status:', message);
 }
 
 function enableTelemetryReception() {
+    // This function would enable the actual telemetry reception
+    // In a real system, this would start listening on a serial port or socket
     addLogEntry('SYSTEM', 'Telemetry reception enabled', 'success');
 }
 
-// ===== 3D ROCKET =====
+// ===== 3D ROCKET VISUALIZATION =====
 function initialize3DRocket() {
     if (!document.getElementById('rocket3d')) return;
     
     try {
+        // Clean up existing renderer
         if (AppState.renderer && AppState.renderer.domElement.parentNode) {
             AppState.renderer.domElement.parentNode.removeChild(AppState.renderer.domElement);
         }
         
+        // Scene setup
         AppState.scene = new THREE.Scene();
         AppState.scene.background = new THREE.Color(0x0a1128);
         
+        // Camera setup
         const container = document.getElementById('rocket3d');
         AppState.camera = new THREE.PerspectiveCamera(
             60,
@@ -1936,6 +2190,7 @@ function initialize3DRocket() {
         AppState.camera.position.set(0, 10, 25);
         AppState.camera.lookAt(0, 0, 0);
         
+        // Renderer setup
         AppState.renderer = new THREE.WebGLRenderer({ 
             antialias: true, 
             alpha: true,
@@ -1945,6 +2200,7 @@ function initialize3DRocket() {
         AppState.renderer.shadowMap.enabled = true;
         container.appendChild(AppState.renderer.domElement);
         
+        // Lighting
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
         AppState.scene.add(ambientLight);
         
@@ -1952,10 +2208,16 @@ function initialize3DRocket() {
         directionalLight.position.set(10, 20, 15);
         AppState.scene.add(directionalLight);
         
+        // Create rocket
         createProfessionalRocket();
+        
+        // Create environment
         createEnvironment();
+        
+        // Start animation
         animate3DRocket();
         
+        // Handle window resize
         window.addEventListener('resize', () => {
             if (AppState.camera && AppState.renderer && container) {
                 AppState.camera.aspect = container.clientWidth / container.clientHeight;
@@ -1975,6 +2237,7 @@ function initialize3DRocket() {
 function createProfessionalRocket() {
     const rocketGroup = new THREE.Group();
     
+    // Main body
     const bodyGeometry = new THREE.CylinderGeometry(0.8, 1.0, 15, 32);
     const bodyMaterial = new THREE.MeshPhongMaterial({
         color: 0x1e3a8a,
@@ -1983,6 +2246,7 @@ function createProfessionalRocket() {
     const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
     rocketGroup.add(body);
     
+    // Nose cone
     const noseGeometry = new THREE.ConeGeometry(1.0, 4, 32);
     const noseMaterial = new THREE.MeshPhongMaterial({
         color: 0xdc2626,
@@ -1992,6 +2256,7 @@ function createProfessionalRocket() {
     nose.position.y = 9.5;
     rocketGroup.add(nose);
     
+    // Fins
     const finGeometry = new THREE.BoxGeometry(3, 0.2, 1.5);
     const finMaterial = new THREE.MeshPhongMaterial({
         color: 0x475569
@@ -2014,6 +2279,7 @@ function createProfessionalRocket() {
 }
 
 function createEnvironment() {
+    // Ground plane
     const groundGeometry = new THREE.PlaneGeometry(100, 100);
     const groundMaterial = new THREE.MeshPhongMaterial({
         color: 0x1e293b
@@ -2028,6 +2294,7 @@ function animate3DRocket() {
     
     requestAnimationFrame(animate3DRocket);
     
+    // Update rocket stats
     if (AppState.rocket && domElements.rocketOrientation) {
         domElements.rocketOrientation.textContent = 'Stable';
     }
@@ -2038,6 +2305,7 @@ function animate3DRocket() {
 function update3DRocketFromTelemetry(data) {
     if (!AppState.rocket) return;
     
+    // Update rocket orientation based on telemetry
     if (data.roll !== undefined) {
         AppState.rocket.rotation.z = data.roll * Math.PI / 180;
     }
@@ -2051,10 +2319,11 @@ function update3DRocketFromTelemetry(data) {
     }
 }
 
-// ===== MENU NAVIGATION =====
+// ===== MENU NAVIGATION SYSTEM =====
 function initializeMenuNavigation() {
     console.log('Initializing menu navigation...');
     
+    // Toggle menu overlay
     if (domElements.menuToggle) {
         domElements.menuToggle.addEventListener('click', () => {
             console.log('Opening menu...');
@@ -2067,6 +2336,7 @@ function initializeMenuNavigation() {
         domElements.menuClose.addEventListener('click', closeMenu);
     }
     
+    // Menu card click handlers
     if (domElements.menuCards) {
         domElements.menuCards.forEach(card => {
             card.addEventListener('click', (e) => {
@@ -2079,6 +2349,7 @@ function initializeMenuNavigation() {
         });
     }
     
+    // Panel back button handlers
     if (domElements.panelBackBtns) {
         domElements.panelBackBtns.forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -2091,6 +2362,7 @@ function initializeMenuNavigation() {
         });
     }
     
+    // Close menu on escape key
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             if (domElements.menuOverlay.classList.contains('active')) {
@@ -2102,6 +2374,7 @@ function initializeMenuNavigation() {
         }
     });
     
+    // Close menu when clicking outside content
     domElements.menuOverlay.addEventListener('click', (e) => {
         if (e.target === domElements.menuOverlay) {
             closeMenu();
@@ -2118,28 +2391,34 @@ function openMenu() {
 function openPanel(panelId) {
     console.log('Opening panel:', panelId);
     
+    // Close menu first
     closeMenu();
     
+    // Close any open panel
     if (AppState.activePanel) {
         closePanel(AppState.activePanel);
     }
     
+    // Hide primary telemetry section
     const primaryTelemetry = document.getElementById('primary-telemetry');
     if (primaryTelemetry) {
         primaryTelemetry.style.display = 'none';
     }
     
+    // Hide data log section
     const dataLogSection = document.getElementById('data-log-section');
     if (dataLogSection) {
         dataLogSection.style.display = 'none';
     }
     
+    // Show selected panel
     const panel = document.getElementById(`${panelId}-panel`);
     if (panel) {
         panel.classList.add('active');
         panel.style.display = 'block';
         AppState.activePanel = panelId;
         
+        // Initialize specific panel features
         switch (panelId) {
             case 'visualization':
                 setTimeout(() => {
@@ -2170,6 +2449,7 @@ function closePanel(panelId) {
         AppState.activePanel = null;
     }
     
+    // Show main page elements
     const primaryTelemetry = document.getElementById('primary-telemetry');
     if (primaryTelemetry) {
         primaryTelemetry.style.display = 'block';
@@ -2191,8 +2471,10 @@ function closeMenu() {
 function initializeEventListeners() {
     console.log('Initializing event listeners...');
     
+    // Menu navigation
     initializeMenuNavigation();
     
+    // Ignition system
     if (domElements.ignitionControlBtn) {
         domElements.ignitionControlBtn.addEventListener('click', openIgnitionSystem);
     }
@@ -2201,10 +2483,12 @@ function initializeEventListeners() {
         domElements.closeIgnitionBtn.addEventListener('click', closeIgnitionSystem);
     }
     
+    // Primary telemetry download button
     if (domElements.downloadTelemetryBtn) {
         domElements.downloadTelemetryBtn.addEventListener('click', downloadPrimaryTelemetry);
     }
     
+    // Control buttons
     if (domElements.resetButton) {
         domElements.resetButton.addEventListener('click', resetMission);
     }
@@ -2221,10 +2505,12 @@ function initializeEventListeners() {
         domElements.downloadTrajectoryCSV.addEventListener('click', downloadTrajectoryCSV);
     }
     
+    // Map controls
     if (domElements.toggleSatellite) {
         domElements.toggleSatellite.addEventListener('click', () => toggleMapType('satellite'));
     }
     
+    // Chart CSV download buttons
     document.querySelectorAll('.download-csv-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             const chartType = this.getAttribute('data-chart');
@@ -2232,10 +2518,12 @@ function initializeEventListeners() {
         });
     });
     
+    // Refresh warning continue button
     if (domElements.continueBtn) {
         domElements.continueBtn.addEventListener('click', hideRefreshWarning);
     }
     
+    // Prevent page refresh during countdown
     window.addEventListener('beforeunload', function(e) {
         if (IgnitionState.countdownActive && !IgnitionState.countdownPaused) {
             e.preventDefault();
@@ -2245,10 +2533,12 @@ function initializeEventListeners() {
         }
     });
     
+    // Add Connect/Disconnect buttons to menu
     addConnectionControls();
 }
 
 function addConnectionControls() {
+    // Add connection controls to the menu
     const menuFooter = document.querySelector('.menu-footer');
     if (menuFooter) {
         const connectBtn = document.createElement('button');
@@ -2265,6 +2555,7 @@ function addConnectionControls() {
         menuFooter.insertBefore(connectBtn, menuFooter.firstChild);
         menuFooter.insertBefore(disconnectBtn, menuFooter.firstChild.nextSibling);
         
+        // Add event listeners
         connectBtn.addEventListener('click', () => {
             connectToSystem();
             connectBtn.style.display = 'none';
@@ -2284,41 +2575,54 @@ function processTelemetryData(data) {
     try {
         const telemetry = typeof data === 'string' ? JSON.parse(data) : data;
         
+        // Check if communication is established
         if (!AppState.communicationEstablished) {
             addLogEntry('ERROR', 'Cannot process telemetry: Communication not established', 'error');
             return;
         }
         
+        // Check if system is connected
         if (!AppState.isSystemConnected) {
             addLogEntry('ERROR', 'Cannot process telemetry: System not connected', 'error');
             return;
         }
         
+        // Check if sensors are initialized
         if (!areSensorsReadyForTelemetry()) {
             addLogEntry('WARNING', 'Cannot process telemetry: Sensors not fully initialized', 'warning');
             return;
         }
         
+        // Start mission on first valid data
         if (!AppState.missionActive && isValidTelemetry(telemetry)) {
             startMission();
         }
         
+        // Update packet count
         AppState.packetCount++;
         
+        // Add timestamp and mission time
         telemetry.timestamp = Date.now();
         telemetry.missionTime = AppState.missionStartTime ? 
             (Date.now() - AppState.missionStartTime) / 1000 : 0;
         
+        // Store in history
         AppState.telemetryData.push(telemetry);
         
+        // Update all displays
         updateTelemetryDisplay(telemetry);
         updateCharts(telemetry);
         update3DRocketFromTelemetry(telemetry);
         addTelemetryLogEntry(telemetry);
         
+        // Update data buffer count
         if (domElements.dataBuffer) {
             domElements.dataBuffer.textContent = AppState.telemetryData.length;
         }
+        
+        // Note: GPS data is updated automatically by the 1-second interval in updateLiveGpsData()
+        
+        // Note: Firebase telemetry is saved automatically by the 5-second interval
         
     } catch (error) {
         console.error('Error processing telemetry:', error);
@@ -2327,6 +2631,7 @@ function processTelemetryData(data) {
 }
 
 function areSensorsReadyForTelemetry() {
+    // Check if all required sensors are initialized
     return AppState.sensors.mpu6050.initialized && 
            AppState.sensors.bmp280.initialized && 
            AppState.sensors.gpsNeo6M.initialized &&
@@ -2343,6 +2648,7 @@ function isValidTelemetry(data) {
 }
 
 function updateTelemetryDisplay(data) {
+    // Only update if we have real data from sensors
     updateElement(data.latitude, domElements.latitude, formatCoordinate(data.latitude, true));
     updateElement(data.longitude, domElements.longitude, formatCoordinate(data.longitude, false));
     updateElement(data.altitude, domElements.altitude, `${data.altitude?.toFixed(0) || '--'} m`);
@@ -2352,6 +2658,7 @@ function updateTelemetryDisplay(data) {
     updateElement(data.accelY, domElements.accelY, `${data.accelY?.toFixed(2) || '--'} G`);
     updateElement(data.accelZ, domElements.accelZ, `${data.accelZ?.toFixed(2) || '--'} G`);
     
+    // REMOVED: Total acceleration calculation formula
     if (domElements.totalAccel) domElements.totalAccel.textContent = '-- G';
     
     updateElement(data.roll, domElements.roll, `${data.roll?.toFixed(1) || '--'}°`);
@@ -2359,6 +2666,7 @@ function updateTelemetryDisplay(data) {
     updateElement(data.yaw, domElements.yaw, `${data.yaw?.toFixed(1) || '--'}°`);
     updateElement(data.angularRate, domElements.angularRate, `${data.angularRate?.toFixed(1) || '--'}°/s`);
     
+    // System status
     if (data.ignition !== undefined && domElements.ignitionStatus) {
         const isIgnited = data.ignition === true || data.ignition === 1;
         AppState.isIgnited = isIgnited;
@@ -2378,12 +2686,14 @@ function updateTelemetryDisplay(data) {
     updateElement(data.gpsSats, domElements.gpsSats, data.gpsSats || '--');
     updateElement(data.temperature, domElements.temperature, `${data.temperature?.toFixed(1) || '--'} °C`);
     
+    // Update additional displays for active panels
     if (AppState.activePanel === 'trajectory' || AppState.activePanel === 'tracking') {
         updatePanelSpecificData(data);
     }
 }
 
 function updatePanelSpecificData(data) {
+    // Update trajectory panel
     if (AppState.activePanel === 'trajectory') {
         updateElement(data.altitude, domElements.currentAltitude, `${data.altitude?.toFixed(0) || '--'} m`);
         updateElement(data.altitude, domElements.trajCurrentAltitude, `${data.altitude?.toFixed(0) || '--'} m`);
@@ -2402,6 +2712,8 @@ function updatePanelSpecificData(data) {
             domElements.descentAltitude.textContent = `${data.altitude?.toFixed(0) || '--'} m`;
         }
     }
+    
+    // Note: Tracking panel GPS data is updated automatically by updateLiveGpsData()
 }
 
 function updateElement(value, element, formattedValue) {
@@ -2428,6 +2740,7 @@ function initMap() {
             zoomControl: true
         });
         
+        // Create launch site marker
         AppState.launchSiteMarker = new google.maps.Marker({
             position: AppState.launchSitePosition,
             map: AppState.googleMap,
@@ -2479,6 +2792,9 @@ function updateCharts(data) {
             });
         }
         
+        // REMOVED: Total acceleration calculation formula
+        
+        // Add temperature data point
         if (data.temperature !== undefined) {
             AppState.chartData.temperature.push({
                 x: data.altitude,
@@ -2486,6 +2802,7 @@ function updateCharts(data) {
             });
         }
         
+        // Keep last 500 points
         const maxPoints = 500;
         if (AppState.chartData.time.length > maxPoints) {
             AppState.chartData.time.shift();
@@ -2496,6 +2813,7 @@ function updateCharts(data) {
             AppState.chartData.totalAccel.shift();
         }
         
+        // Keep last 300 temperature and pressure points
         if (AppState.chartData.temperature.length > 300) {
             AppState.chartData.temperature.shift();
         }
@@ -2503,35 +2821,42 @@ function updateCharts(data) {
             AppState.chartData.pressure.shift();
         }
         
+        // Update charts
         updateChartData();
     }
 }
 
 function updateChartData() {
+    // Update altitude chart
     if (altitudeChart) {
         altitudeChart.data.labels = AppState.chartData.time.slice(-100);
         altitudeChart.data.datasets[0].data = AppState.chartData.altitude.slice(-100);
         altitudeChart.update('none');
     }
     
+    // Update pressure chart
     if (pressureChart && AppState.chartData.pressure.length > 0) {
         pressureChart.data.datasets[0].data = AppState.chartData.pressure.slice(-100);
         pressureChart.update('none');
     }
     
+    // Update acceleration chart
     if (accelerationChart) {
         accelerationChart.data.labels = AppState.chartData.time.slice(-100);
         accelerationChart.data.datasets[0].data = AppState.chartData.accelX.slice(-100);
         accelerationChart.data.datasets[1].data = AppState.chartData.accelY.slice(-100);
         accelerationChart.data.datasets[2].data = AppState.chartData.accelZ.slice(-100);
+        // REMOVED: Total acceleration dataset update
         accelerationChart.update('none');
     }
     
+    // Update temperature chart
     if (temperatureChart && AppState.chartData.temperature.length > 0) {
         temperatureChart.data.datasets[0].data = AppState.chartData.temperature.slice(-100);
         temperatureChart.update('none');
     }
     
+    // Update trajectory chart
     if (trajectoryChart) {
         const currentData = AppState.telemetryData[AppState.telemetryData.length - 1];
         if (currentData && currentData.downrange !== undefined && currentData.altitude !== undefined) {
@@ -2575,36 +2900,43 @@ function resetCharts() {
     }
 }
 
-// ===== CSV DOWNLOADS =====
+// ===== CSV DOWNLOAD FUNCTIONS =====
 function downloadPrimaryTelemetry() {
     try {
+        // Get current telemetry values
         const telemetryData = getCurrentTelemetryData();
         
+        // Create CSV content
         let csvContent = "PRIMARY TELEMETRY DATA - SPACE CLUB RIT\n";
         csvContent += "Generated: " + telemetryData.displayTime + "\n\n";
         
         csvContent += "CATEGORY,PARAMETER,VALUE\n";
         
+        // Position Data
         csvContent += "Position Data,Latitude," + telemetryData.positionData.latitude + "\n";
         csvContent += "Position Data,Longitude," + telemetryData.positionData.longitude + "\n";
         csvContent += "Position Data,Altitude," + telemetryData.positionData.altitude + "\n";
         csvContent += "Position Data,Downrange," + telemetryData.positionData.downrange + "\n";
         
+        // Acceleration 
         csvContent += "Acceleration,Accel X," + telemetryData.accelerationVectors.accelX + "\n";
         csvContent += "Acceleration,Accel Y," + telemetryData.accelerationVectors.accelY + "\n";
         csvContent += "Acceleration,Accel Z," + telemetryData.accelerationVectors.accelZ + "\n";
         csvContent += "Acceleration,Total Accel," + telemetryData.accelerationVectors.totalAccel + "\n";
         
+        // Orientation
         csvContent += "Attitude,Roll," + telemetryData.attitudeOrientation.roll + "\n";
         csvContent += "Attitude,Pitch," + telemetryData.attitudeOrientation.pitch + "\n";
         csvContent += "Attitude,Yaw," + telemetryData.attitudeOrientation.yaw + "\n";
         csvContent += "Attitude,Angular Rate," + telemetryData.attitudeOrientation.angularRate + "\n";
         
+        // System Status
         csvContent += "System,Ignition Status," + telemetryData.systemStatus.ignition + "\n";
         csvContent += "System,Comm Status," + telemetryData.systemStatus.commStatus + "\n";
         csvContent += "System,GPS Satellites," + telemetryData.systemStatus.gpsSats + "\n";
         csvContent += "System,Temperature," + telemetryData.systemStatus.temperature + "\n";
         
+        // Mission Info
         csvContent += "\nMISSION INFORMATION\n";
         csvContent += "Parameter,Value\n";
         csvContent += "Mission Status," + telemetryData.missionInfo.status + "\n";
@@ -2612,12 +2944,15 @@ function downloadPrimaryTelemetry() {
         csvContent += "Data Points," + telemetryData.missionInfo.dataPoints + "\n";
         csvContent += "Mission Time," + telemetryData.missionInfo.missionTime + "\n";
         
+        // Check if there's any real data
         const hasRealData = AppState.telemetryData.length > 0;
         
         if (hasRealData) {
+            // Add latest telemetry data points
             csvContent += "\n=== LATEST TELEMETRY DATA POINTS ===\n";
             csvContent += "Timestamp,Latitude,Longitude,Altitude(m),AccelX(G),AccelY(G),AccelZ(G),Temperature(°C)\n";
             
+            // Get last 10 data points or all if less than 10
             const dataPoints = AppState.telemetryData.slice(-10);
             
             dataPoints.forEach((data, index) => {
@@ -2633,6 +2968,7 @@ function downloadPrimaryTelemetry() {
             });
         }
         
+        // Create and download the CSV file
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -2644,8 +2980,10 @@ function downloadPrimaryTelemetry() {
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
         
+        // Show success message
         showDownloadSuccess(domElements.downloadTelemetryBtn);
         
+        // Log the download
         addLogEntry('SYSTEM', 'Primary telemetry data downloaded as CSV');
         
     } catch (error) {
@@ -2655,6 +2993,7 @@ function downloadPrimaryTelemetry() {
 }
 
 function getCurrentTelemetryData() {
+    // Get current values from display
     const data = {
         timestamp: new Date().toISOString(),
         displayTime: new Date().toLocaleString(),
@@ -2938,7 +3277,7 @@ function showDownloadSuccess(button) {
     }, 2000);
 }
 
-// ===== MISSION CONTROL =====
+// ===== MISSION CONTROL FUNCTIONS =====
 function startMission() {
     if (!AppState.missionActive) {
         AppState.missionActive = true;
@@ -2986,8 +3325,10 @@ function addLogEntry(type, message, status = '') {
     if (domElements.telemetryLog) {
         domElements.telemetryLog.appendChild(logEntry);
         
+        // Auto-scroll to bottom
         domElements.telemetryLog.scrollTop = domElements.telemetryLog.scrollHeight;
         
+        // Keep last 100 entries
         while (domElements.telemetryLog.children.length > 100) {
             domElements.telemetryLog.removeChild(domElements.telemetryLog.firstChild);
         }
@@ -2997,6 +3338,7 @@ function addLogEntry(type, message, status = '') {
 // ===== RESET FUNCTIONS =====
 function resetMission() {
     if (confirm('Reset mission and clear all data?')) {
+        // Clear state
         AppState.missionActive = false;
         AppState.missionStartTime = null;
         AppState.telemetryData = [];
@@ -3006,19 +3348,29 @@ function resetMission() {
         AppState.ignitionTime = null;
         AppState.communicationEstablished = false;
         
+        // Stop GPS tracking
         stopGpsTracking();
+        
+        // Stop Firebase telemetry
         stopFirebaseTelemetry();
         
+        // DO NOT reset system connection - let user decide
+        // DO NOT reset sensors - they remain as they are
+        
+        // Reset chart data
         AppState.chartData = {
             altitude: [], pressure: [], temperature: [], time: [],
             accelX: [], accelY: [], accelZ: [], totalAccel: []
         };
         
+        // Reset GPS tracking data
         GpsTrackingState.positionHistory = [];
         GpsTrackingState.lastPosition = null;
         
+        // Reset charts
         resetCharts();
         
+        // Reset 3D rocket
         if (AppState.rocket) {
             AppState.rocket.rotation.set(0, 0, 0);
         }
@@ -3027,10 +3379,16 @@ function resetMission() {
             AppState.camera.lookAt(0, 0, 0);
         }
         
+        // Close all panels and show main page
         closeAllPanels();
+        
+        // Close menu
         closeMenu();
+        
+        // Reset displays
         resetAllDisplays();
         
+        // Clear logs
         if (domElements.telemetryLog) {
             domElements.telemetryLog.innerHTML = `
                 <div class="log-entry">
@@ -3045,10 +3403,12 @@ function resetMission() {
 }
 
 function closeAllPanels() {
+    // Close any active panel
     if (AppState.activePanel) {
         closePanel(AppState.activePanel);
     }
     
+    // Show all main page elements
     const elementsToShow = [
         document.getElementById('primary-telemetry'),
         document.getElementById('data-log-section')
@@ -3064,6 +3424,7 @@ function closeAllPanels() {
 function resetAllDisplays() {
     const resetValue = '--';
     
+    // Update all elements with reset values
     const elementsToReset = [
         { element: domElements.dataBuffer, value: '0' },
         { element: domElements.latitude, value: `${resetValue}°` },
@@ -3092,7 +3453,9 @@ function resetAllDisplays() {
         { element: domElements.trajCurrentAltitude, value: `${resetValue} m` },
         { element: domElements.descentAltitude, value: `${resetValue} m` },
         { element: domElements.ignitionTime, value: '--:--' },
-        { element: domElements.maxqAlt, value: `${resetValue} m` }
+        { element: domElements.maxqAlt, value: `${resetValue} m` },
+        { element: domElements.gpsTrackingStatus, value: 'TRACKING INACTIVE', status: 'critical' },
+        { element: domElements.gpsLastUpdate, value: 'Last Update: --:--:--' }
     ];
     
     elementsToReset.forEach(item => {
@@ -3104,6 +3467,7 @@ function resetAllDisplays() {
         }
     });
     
+    // Update comm status based on connection state
     if (domElements.commStatus) {
         if (AppState.communicationEstablished) {
             domElements.commStatus.textContent = 'COMM ESTABLISHED';
@@ -3131,26 +3495,31 @@ window.initMap = initMap;
 window.inputTelemetryData = function(telemetryData) {
     console.log('Receiving telemetry data:', telemetryData);
     
+    // Check if system is connected
     if (!AppState.isSystemConnected) {
         addLogEntry('ERROR', 'Cannot process telemetry: System not connected', 'error');
         return;
     }
     
+    // Validate incoming data
     if (!telemetryData || typeof telemetryData !== 'object') {
         console.error('Invalid telemetry data format');
         addLogEntry('ERROR', 'Invalid telemetry data format received', 'error');
         return;
     }
     
+    // Check if communication is established
     if (!AppState.communicationEstablished) {
         addLogEntry('ERROR', 'Cannot process telemetry: Communication not established', 'error');
         return;
     }
     
+    // Check if sensors are ready
     if (!areSensorsReadyForTelemetry()) {
         addLogEntry('WARNING', 'Cannot process telemetry: Sensors not fully initialized', 'warning');
         return;
     }
     
+    // Process the telemetry data
     processTelemetryData(telemetryData);
 };
