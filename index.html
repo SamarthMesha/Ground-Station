@@ -21,6 +21,17 @@
     <title>Space Club RIT - Ground Station</title>
 </head>
 <body>
+    <!-- Refresh Warning Notification -->
+    <div class="refresh-warning" id="refreshWarning">
+        <div class="ignition-access-title">COUNTDOWN ACTIVE</div>
+        <div class="ignition-notification-message">
+            Countdown sequence is currently active. Page refresh is not allowed during countdown.
+        </div>
+        <div class="ignition-countdown-controls">
+            <button class="ignition-control-btn" id="continueBtn">CONTINUE</button>
+        </div>
+    </div>
+
     <!-- Main Header -->
     <header>
         <div class="header-left">
@@ -38,13 +49,46 @@
             <div class="eklavya-main">EKLAVYA</div>
         </div>
         
-        <div class="header-right">
+        <!-- Empty right side for balance -->
+        <div class="header-right"></div>
+    </header>
+
+    <!-- Menu Bar (Below Header) -->
+    <div class="menu-bar">
+        <div class="menu-toggle-wrapper">
             <div class="menu-toggle" id="menu-toggle">
                 <i class="fas fa-bars"></i>
-                <span class="menu-text">MENU</span>
+                <span class="menu-text">MISSION CONTROL MENU</span>
             </div>
         </div>
-    </header>
+        
+        <div class="csv-buttons-wrapper">
+            <!-- Add Ignition Button here -->
+            <button id="ignition-system-btn" class="csv-btn ignition-btn">
+                <i class="fas fa-fire"></i>
+                <span>Ignition System</span>
+            </button>
+            
+            <button id="download-data-csv" class="csv-btn data-csv">
+                <i class="fas fa-file-csv"></i>
+                <span>Data CSV</span>
+            </button>
+            <button id="download-graphs-csv" class="csv-btn graph-csv">
+                <i class="fas fa-chart-bar"></i>
+                <span>Graphs CSV</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Ignition System Overlay (full-screen) -->
+    <div class="ignition-overlay" id="ignition-overlay">
+        <div class="ignition-container" id="ignition-container">
+            <!-- Login will be loaded here initially -->
+        </div>
+        <button class="close-ignition-btn" id="close-ignition-btn">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
 
     <!-- Hamburger Menu Overlay -->
     <div class="menu-overlay" id="menu-overlay">
@@ -139,40 +183,32 @@
             </div>
             
             <div class="menu-footer">
+                <button id="connect-system-btn" class="control-btn connect-btn">
+                    <i class="fas fa-plug"></i>
+                    <span>Connect System</span>
+                </button>
+                <button id="disconnect-system-btn" class="control-btn disconnect-btn" style="display: none;">
+                    <i class="fas fa-plug"></i>
+                    <span>Disconnect System</span>
+                </button>
                 <button id="reset-button" class="control-btn reset-btn">
                     <i class="fas fa-redo"></i>
-                    <span>Reset All</span>
-                </button>
-                <button id="export-button" class="control-btn export-btn">
-                    <i class="fas fa-download"></i>
-                    <span>Export Data</span>
+                    <span>Reset Mission</span>
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Control Buttons -->
-    <div class="control-buttons-row">
-        <button id="reset-all-button" class="control-btn reset-btn">
-            <i class="fas fa-redo"></i>
-            <span>Reset All</span>
-        </button>
-        <button id="download-data-csv" class="control-btn download-btn">
-            <i class="fas fa-file-csv"></i>
-            <span>Data CSV</span>
-        </button>
-        <button id="download-graphs-csv" class="control-btn download-btn">
-            <i class="fas fa-chart-bar"></i>
-            <span>Graphs CSV</span>
-        </button>
-    </div>
-    
     <main>
         <!-- Primary Telemetry Section (Always Visible) -->
         <section id="primary-telemetry" class="card-container">
             <div class="card-header">
                 <h2><i class="fas fa-satellite-dish"></i> PRIMARY TELEMETRY</h2>
                 <div class="telemetry-status">
+                    <button id="download-telemetry-btn" class="telemetry-download-btn">
+                        <i class="fas fa-download"></i>
+                        <span>Download Telemetry</span>
+                    </button>
                 </div>
             </div>
             <div class="telemetry-grid">
@@ -202,8 +238,7 @@
 
                 <div class="telemetry-card">
                     <div class="telemetry-header">
-                        <h3><i class="fas fa-tachometer-alt"></i> ACCELERATION VECTORS</h3>
-                        <div class="telemetry-unit">BODY FRAME</div>
+                        <h3><i class="fas fa-tachometer-alt"></i> ACCELERATION</h3>
                     </div>
                     <div class="telemetry-body">
                         <div class="telemetry-row">
@@ -227,8 +262,7 @@
 
                 <div class="telemetry-card">
                     <div class="telemetry-header">
-                        <h3><i class="fas fa-compass"></i> ATTITUDE & ORIENTATION</h3>
-                        <div class="telemetry-unit">BODY FRAME</div>
+                        <h3><i class="fas fa-compass"></i> ORIENTATION</h3>
                     </div>
                     <div class="telemetry-body">
                         <div class="telemetry-row">
@@ -253,7 +287,6 @@
                 <div class="telemetry-card">
                     <div class="telemetry-header">
                         <h3><i class="fas fa-heartbeat"></i> SYSTEM STATUS</h3>
-                        <div class="telemetry-unit">HEALTH</div>
                     </div>
                     <div class="telemetry-body">
                         <div class="telemetry-row">
@@ -274,11 +307,35 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- New: Thermocouple Data Card -->
+                <div class="telemetry-card">
+                    <div class="telemetry-header">
+                        <h3><i class="fas fa-thermometer-half"></i> THERMOCOUPLE DATA</h3>
+                    </div>
+                    <div class="telemetry-body">
+                        <div class="telemetry-row">
+                            <span class="telemetry-label">TC1 - Nose Cone</span>
+                            <span class="telemetry-value scientific-value" id="thermocouple-1">-- °C</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- New: Strain Gauge Data Card -->
+                <div class="telemetry-card">
+                    <div class="telemetry-header">
+                        <h3><i class="fas fa-weight-hanging"></i> STRAIN GAUGE DATA</h3>
+                    </div>
+                    <div class="telemetry-body">
+                        <div class="telemetry-row">
+                            <span class="telemetry-label">SG1 - Nose Joint</span>
+                            <span class="telemetry-value scientific-value" id="strain-gauge-1">-- µε</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 
-        <!-- Dynamic Panels (Hidden by default, shown when menu item is clicked) -->
-        
         <!-- Performance Analysis Panel -->
         <section id="performance-panel" class="panel-container hidden">
             <div class="panel-header">
@@ -289,8 +346,7 @@
                 <h2><i class="fas fa-chart-line"></i> PERFORMANCE ANALYSIS</h2>
                 <div class="panel-controls">
                     <div class="chart-metrics">
-                        <i class="fas fa-database"></i>
-                        Data Points: <span id="data-buffer">0</span>
+                        <span>Data Buffer: <span id="data-buffer">0</span> points</span>
                     </div>
                 </div>
             </div>
@@ -300,10 +356,10 @@
                     <div class="chart-header">
                         <h3><i class="fas fa-running"></i> ACCELERATION VECTORS vs TIME</h3>
                         <div class="chart-controls">
-                            <button class="chart-btn" data-action="zoom-in"><i class="fas fa-search-plus"></i></button>
-                            <button class="chart-btn" data-action="zoom-out"><i class="fas fa-search-minus"></i></button>
-                            <button class="chart-btn" data-action="reset"><i class="fas fa-redo"></i></button>
-                            <button class="chart-btn" data-action="export"><i class="fas fa-download"></i></button>
+                            <button class="chart-btn download-csv-btn" data-chart="acceleration">
+                                <i class="fas fa-file-csv"></i>
+                                CSV
+                            </button>
                         </div>
                     </div>
                     <div class="chart-wrapper">
@@ -315,10 +371,10 @@
                     <div class="chart-header">
                         <h3><i class="fas fa-thermometer-half"></i> TEMPERATURE vs ALTITUDE</h3>
                         <div class="chart-controls">
-                            <button class="chart-btn" data-action="zoom-in"><i class="fas fa-search-plus"></i></button>
-                            <button class="chart-btn" data-action="zoom-out"><i class="fas fa-search-minus"></i></button>
-                            <button class="chart-btn" data-action="reset"><i class="fas fa-redo"></i></button>
-                            <button class="chart-btn" data-action="export"><i class="fas fa-download"></i></button>
+                            <button class="chart-btn download-csv-btn" data-chart="temperature">
+                                <i class="fas fa-file-csv"></i>
+                                CSV
+                            </button>
                         </div>
                     </div>
                     <div class="chart-wrapper">
@@ -332,10 +388,10 @@
                     <div class="chart-header">
                         <h3><i class="fas fa-mountain"></i> ALTITUDE vs TIME</h3>
                         <div class="chart-controls">
-                            <button class="chart-btn" data-action="zoom-in"><i class="fas fa-search-plus"></i></button>
-                            <button class="chart-btn" data-action="zoom-out"><i class="fas fa-search-minus"></i></button>
-                            <button class="chart-btn" data-action="reset"><i class="fas fa-redo"></i></button>
-                            <button class="chart-btn" data-action="export"><i class="fas fa-download"></i></button>
+                            <button class="chart-btn download-csv-btn" data-chart="altitude">
+                                <i class="fas fa-file-csv"></i>
+                                CSV
+                            </button>
                         </div>
                     </div>
                     <div class="chart-wrapper">
@@ -347,10 +403,10 @@
                     <div class="chart-header">
                         <h3><i class="fas fa-weight-hanging"></i> PRESSURE vs ALTITUDE</h3>
                         <div class="chart-controls">
-                            <button class="chart-btn" data-action="zoom-in"><i class="fas fa-search-plus"></i></button>
-                            <button class="chart-btn" data-action="zoom-out"><i class="fas fa-search-minus"></i></button>
-                            <button class="chart-btn" data-action="reset"><i class="fas fa-redo"></i></button>
-                            <button class="chart-btn" data-action="export"><i class="fas fa-download"></i></button>
+                            <button class="chart-btn download-csv-btn" data-chart="pressure">
+                                <i class="fas fa-file-csv"></i>
+                                CSV
+                            </button>
                         </div>
                     </div>
                     <div class="chart-wrapper">
@@ -392,6 +448,12 @@
                                 Downrange: <span id="downrange-distance">-- km</span>
                             </div>
                         </div>
+                        <div class="trajectory-download">
+                            <button class="download-trajectory-btn" id="download-trajectory-csv">
+                                <i class="fas fa-file-csv"></i>
+                                Download CSV
+                            </button>
+                        </div>
                     </div>
                     <div class="trajectory-wrapper">
                         <canvas id="trajectoryChart"></canvas>
@@ -418,8 +480,6 @@
                             <span id="maxq-alt">-- m</span>
                         </div>
                     </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </section>
@@ -434,6 +494,11 @@
                 <h2><i class="fas fa-globe-americas"></i> LIVE GOOGLE EARTH TRACKING</h2>
                 <div class="panel-controls">
                     <div class="gps-status">
+                        <div class="gps-status-item">
+                            <span id="gps-tracking-status" data-status="critical">TRACKING INACTIVE</span>
+                        </div>
+                        <div class="gps-status-item">
+                            <span id="gps-last-update">Last Update: --:--:--</span>
                         </div>
                     </div>
                 </div>
@@ -444,7 +509,6 @@
                     <div class="map-header">
                         <h3><i class="fas fa-map-marked-alt"></i> LIVE FLIGHT TRACKING</h3>
                         <div class="map-controls">
-                            </button>
                             <button class="map-btn" id="toggle-satellite">
                                 <i class="fas fa-satellite"></i>
                                 <span>Satellite</span>
@@ -506,9 +570,6 @@
                             </div>
                         </div>
                     </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </section>
@@ -522,35 +583,18 @@
                 </button>
                 <h2><i class="fas fa-rocket"></i> 3D ROCKET & FLIGHT DYNAMICS</h2>
                 <div class="panel-controls">
-                    <div class="viz-controls">
-                        <button id="toggle-rocket-rotate" class="viz-btn">
-                            <i class="fas fa-sync-alt"></i>
-                            <span>Auto Rotate</span>
-                        </button>
-                        <button id="reset-rocket-view" class="viz-btn">
-                            <i class="fas fa-crosshairs"></i>
-                            <span>Reset View</span>
-                        </button>
-                        <button id="toggle-exhaust" class="viz-btn">
-                            <i class="fas fa-fire"></i>
-                            <span>Exhaust</span>
-                        </button>
+                    <div class="rocket-status">
+                        <span id="rocket-status">3D Visualization Ready</span>
                     </div>
                 </div>
             </div>
             
             <div class="visualization-container">
-                <div class="viz-dual-section">
-                    <!-- Left: 3D Rocket Visualization -->
+                <div class="viz-single-section">
+                    <!-- 3D Rocket Visualization -->
                     <div class="rocket-visualization">
                         <div class="viz-card-header">
-                            <h3><i class="fas fa-sync-alt"></i> 3D ROCKET GYRATION & ANIMATION</h3>
-                            <div class="rocket-controls">
-                                <div class="control-group">
-                                    <label for="rotation-speed">Rotation Speed:</label>
-                                    <input type="range" id="rotation-speed" min="0" max="100" value="50">
-                                </div>
-                            </div>
+                            <h3><i class="fas fa-rocket"></i> 3D ROCKET GYRATION & ANIMATION</h3>
                         </div>
                         <div class="rocket-container">
                             <div id="rocket3d"></div>
@@ -561,83 +605,9 @@
                                         <span class="stat-value" id="rocket-orientation">Stable</span>
                                     </div>
                                     <div class="stat-item">
-                                        <span class="stat-label"><i class="fas fa-tachometer-alt"></i> Gyration Rate:</span>
-                                        <span class="stat-value" id="gyration-rate">0°/s</span>
+                                        <span class="stat-label"><i class="fas fa-tachometer-alt"></i> Rotation:</span>
+                                        <span class="stat-value" id="rocket-rotation">0°/s</span>
                                     </div>
-                                    <div class="stat-item">
-                                        <span class="stat-label"><i class="fas fa-spinner"></i> Spin:</span>
-                                        <span class="stat-value" id="rocket-spin">0 RPM</span>
-                                    </div>
-                                    <div class="stat-item">
-                                        <span class="stat-label"><i class="fas fa-fire"></i> Thrust Level:</span>
-                                        <span class="stat-value" id="thrust-level">0%</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Right: Flight Dynamics Visualization -->
-                    <div class="flight-dynamics">
-                        <div class="viz-card-header">
-                            <h3><i class="fas fa-plane"></i> FLIGHT DYNAMICS VISUALIZATION</h3>
-                            <div class="visualization-status">
-                                <span class="status-dot active"></span>
-                                <span id="vis-message">Real-time Visualization Active</span>
-                            </div>
-                        </div>
-                        <div class="dynamics-container">
-                            <canvas id="flightCanvas" width="800" height="400"></canvas>
-                            <div class="dynamics-overlay">
-                                <div class="dynamics-info">
-                                    <div class="info-item">
-                                        <span class="info-label"><i class="fas fa-flag"></i> Flight Mode:</span>
-                                        <span class="info-value" id="flight-mode">Standby</span>
-                                    </div>
-                                    <div class="info-item">
-                                        <span class="info-label"><i class="fas fa-tachometer-alt"></i> Velocity:</span>
-                                        <span class="info-value" id="viz-velocity">-- m/s</span>
-                                    </div>
-                                    <div class="info-item">
-                                        <span class="info-label"><i class="fas fa-wind"></i> Dynamic Pressure:</span>
-                                        <span class="info-value" id="viz-dyn-pressure">-- kPa</span>
-                                    </div>
-                                    <div class="info-item">
-                                        <span class="info-label"><i class="fas fa-bolt"></i> Acceleration:</span>
-                                        <span class="info-value" id="viz-acceleration">-- G</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="dynamics-data">
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="data-card">
-                        <h4><i class="fas fa-chart-area"></i> REAL-TIME METRICS</h4>
-                        <div class="metrics-grid">
-                            <div class="metric-item">
-                                <div class="metric-icon">
-                                    <i class="fas fa-angle-double-up"></i>
-                                </div>
-                                <div class="metric-content">
-                                    <span class="metric-label">Pitch Angle</span>
-                                    <span class="metric-value" id="pitch-angle">--°</span>
-                                </div>
-                            </div>
-                            <div class="metric-item">
-                                <div class="metric-icon">
-                                    <i class="fas fa-redo"></i>
-                                </div>
-                                <div class="metric-content">
-                                    <span class="metric-label">Roll Rate</span>
-                                    <span class="metric-value" id="roll-rate">--°/s</span>
-                                </div>
-                            </div>
                                 </div>
                             </div>
                         </div>
@@ -650,47 +620,143 @@
         <section id="data-log-section" class="card-container">
             <div class="card-header">
                 <h2><i class="fas fa-clipboard-list"></i> TELEMETRY DATA LOG</h2>
-                <div class="log-controls-bottom">
-                    <div class="toggle-switch">
-                        <input type="checkbox" id="auto-scroll" checked>
-                        <span class="toggle-slider"></span>
-                        <span class="toggle-label">Auto-scroll</span>
-                    </div>
-                    <div class="log-filter">
-                        <label for="log-filter"><i class="fas fa-filter"></i> Filter:</label>
-                        <select id="log-filter">
-                            <option value="all">All</option>
-                            <option value="telemetry">Telemetry</option>
-                            <option value="gps">GPS</option>
-                            <option value="system">System</option>
-                            <option value="warning">Warnings</option>
-                            <option value="error">Errors</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-            <div class="log-controls">
-                <button id="export-log" class="log-btn">
-                    <i class="fas fa-download"></i>
-                    <span class="btn-text">Export Log</span>
-                </button>
-                <button id="pause-log" class="log-btn">
-                    <i class="fas fa-pause"></i>
-                    <span class="btn-text">Pause Stream</span>
-                </button>
-                <button id="clear-log" class="log-btn">
-                    <i class="fas fa-trash"></i>
-                    <span class="btn-text">Clear Log</span>
-                </button>
             </div>
             <div class="log-container" id="telemetry-log">
                 <div class="log-entry">
                     <span class="log-time">--:--:--</span>
-                    <span class="log-data">[SYSTEM] Mission Control initialized and waiting for telemetry data</span>
+                    <span class="log-data">[SYSTEM] Mission Control initialized. Waiting for sensor initialization...</span>
                 </div>
             </div>
         </section>
     </main>
+    
+    <!-- Firebase SDK for Ignition System -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
+        import { getDatabase } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { logEvent } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
+
+        // Your web app's Firebase configuration for Ignition System
+        const firebaseIgnitionConfig = {
+            apiKey: "AIzaSyDuju4i1WijMZQIO2fCsC0dgFgrDsu_E8Q",
+            authDomain: "eklavya-ignition-system.firebaseapp.com",
+            databaseURL: "https://eklavya-ignition-system-default-rtdb.firebaseio.com",
+            projectId: "eklavya-ignition-system",
+            storageBucket: "eklavya-ignition-system.firebasestorage.app",
+            messagingSenderId: "204217864798",
+            appId: "1:204217864798:web:db64b45044858b70265acf",
+            measurementId: "G-2JYQY7F2XJ"
+        };
+
+        // Initialize Firebase for Ignition
+        const ignitionApp = initializeApp(firebaseIgnitionConfig, "ignitionApp");
+        const ignitionAnalytics = getAnalytics(ignitionApp);
+        const ignitionDatabase = getDatabase(ignitionApp);
+        
+        // Make Ignition Firebase available globally
+        window.firebaseIgnitionApp = ignitionApp;
+        window.firebaseIgnitionAnalytics = ignitionAnalytics;
+        window.firebaseIgnitionDatabase = ignitionDatabase;
+        window.firebaseIgnitionLogEvent = logEvent;
+        
+        console.log("Firebase Ignition System initialized successfully");
+    </script>
+
+    <!-- Firebase SDK for Telemetry Data -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set, push, onValue, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        // Your web app's Firebase configuration for Telemetry Data
+        const firebaseTelemetryConfig = {
+            apiKey: "AIzaSyAjHxtN7YmwNXicU4qpCIgtZhgksfpnd2E",
+            authDomain: "ignition-control-system.firebaseapp.com",
+            databaseURL: "https://ignition-control-system-default-rtdb.firebaseio.com",
+            projectId: "ignition-control-system",
+            storageBucket: "ignition-control-system.firebasestorage.app",
+            messagingSenderId: "179028944207",
+            appId: "1:179028944207:web:09c9511a3dd202d0f2113a",
+            measurementId: "G-HG0LFJZ43M"
+        };
+
+        // Initialize Firebase for Telemetry
+        const telemetryApp = initializeApp(firebaseTelemetryConfig, "telemetryApp");
+        const telemetryDatabase = getDatabase(telemetryApp);
+        
+        // Make Telemetry Firebase available globally
+        window.firebaseTelemetryApp = telemetryApp;
+        window.firebaseTelemetryDatabase = telemetryDatabase;
+        
+        console.log("Firebase Telemetry System initialized successfully");
+        
+        // Function to save telemetry data to Firebase
+        window.saveTelemetryToFirebase = async function(telemetryData) {
+            try {
+                const telemetryRef = ref(telemetryDatabase, 'telemetry/latest');
+                await set(telemetryRef, telemetryData);
+                
+                // Also push to history
+                const historyRef = ref(telemetryDatabase, 'telemetry/history');
+                await push(historyRef, {
+                    ...telemetryData,
+                    timestamp: Date.now()
+                });
+                
+                console.log("Telemetry saved to Firebase:", telemetryData);
+                return true;
+            } catch (error) {
+                console.error("Error saving telemetry to Firebase:", error);
+                return false;
+            }
+        };
+        
+        // Function to get live telemetry from Firebase
+        window.getLiveTelemetryFromFirebase = function(callback) {
+            try {
+                const telemetryRef = ref(telemetryDatabase, 'telemetry/latest');
+                onValue(telemetryRef, (snapshot) => {
+                    const data = snapshot.val();
+                    if (data) {
+                        callback(data);
+                    }
+                });
+                return true;
+            } catch (error) {
+                console.error("Error getting live telemetry:", error);
+                return false;
+            }
+        };
+        
+        // Function to get telemetry history from Firebase
+        window.getTelemetryHistoryFromFirebase = async function(limit = 100) {
+            try {
+                const historyRef = ref(telemetryDatabase, 'telemetry/history');
+                const snapshot = await get(historyRef);
+                const history = [];
+                
+                if (snapshot.exists()) {
+                    snapshot.forEach((childSnapshot) => {
+                        history.push({
+                            id: childSnapshot.key,
+                            ...childSnapshot.val()
+                        });
+                    });
+                }
+                
+                // Sort by timestamp and limit results
+                return history
+                    .sort((a, b) => b.timestamp - a.timestamp)
+                    .slice(0, limit);
+            } catch (error) {
+                console.error("Error getting telemetry history:", error);
+                return [];
+            }
+        };
+    </script>
+
     <script src="script.js"></script>
 </body>
 </html>
