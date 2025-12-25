@@ -1,6 +1,3 @@
-// ===== MISSION CONTROL DASHBOARD - SPACE CLUB RIT =====
-// Enhanced with ignition control system and live GPS tracking
-
 // Main application state
 const AppState = {
     missionActive: false,
