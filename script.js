@@ -1,3 +1,6 @@
+// ===== MISSION CONTROL DASHBOARD - SPACE CLUB RIT =====
+// Enhanced with ignition control system and live GPS tracking
+
 // Main application state
 const AppState = {
     missionActive: false,
@@ -104,11 +107,12 @@ const domElements = {
     // Download button
     downloadTelemetryBtn: document.getElementById('download-telemetry-btn'),
     
-    // Primary telemetry
-    latitude: document.getElementById('latitude'),
-    longitude: document.getElementById('longitude'),
+    // Primary telemetry (now in performance panel)
+    // REMOVED: latitude and longitude references
     altitude: document.getElementById('altitude'),
     downrange: document.getElementById('downrange'),
+    verticalSpeed: document.getElementById('vertical-speed'),
+    horizontalSpeed: document.getElementById('horizontal-speed'),
     
     // Acceleration vectors
     accelX: document.getElementById('accel-x'),
@@ -128,8 +132,20 @@ const domElements = {
     gpsSats: document.getElementById('gps-sats'),
     temperature: document.getElementById('temperature'),
     
-    // 3D Rocket stats
+    // 3D Rocket stats (now in main dashboard)
     rocketOrientation: document.getElementById('rocket-orientation'),
+    rocketRotationX: document.getElementById('rocket-rotation-x'),
+    rocketRotationY: document.getElementById('rocket-rotation-y'),
+    rocketRotationZ: document.getElementById('rocket-rotation-z'),
+    
+    // GPS elements (now in main dashboard)
+    mapLat: document.getElementById('map-lat'),
+    mapLon: document.getElementById('map-lon'),
+    mapAlt: document.getElementById('map-alt'),
+    gpsLatitude: document.getElementById('gps-latitude'),
+    gpsLongitude: document.getElementById('gps-longitude'),
+    gpsAltitude: document.getElementById('gps-altitude'),
+    gpsSatellites: document.getElementById('gps-satellites'),
     
     // Trajectory elements
     maxAltitude: document.getElementById('max-altitude'),
@@ -140,24 +156,10 @@ const domElements = {
     maxqAlt: document.getElementById('maxq-alt'),
     ignitionTime: document.getElementById('ignition-time'),
     
-    // GPS elements
-    mapLat: document.getElementById('map-lat'),
-    mapLon: document.getElementById('map-lon'),
-    mapAlt: document.getElementById('map-alt'),
-    gpsLatitude: document.getElementById('gps-latitude'),
-    gpsLongitude: document.getElementById('gps-longitude'),
-    gpsAltitude: document.getElementById('gps-altitude'),
-    gpsSatellites: document.getElementById('gps-satellites'),
-    
-    // GPS Tracking status
-    gpsTrackingStatus: document.getElementById('gps-tracking-status'),
-    gpsLastUpdate: document.getElementById('gps-last-update'),
-    
     // Panels
     performancePanel: document.getElementById('performance-panel'),
     trajectoryPanel: document.getElementById('trajectory-panel'),
-    trackingPanel: document.getElementById('tracking-panel'),
-    visualizationPanel: document.getElementById('visualization-panel'),
+    dataLogPanel: document.getElementById('data-log-panel'),
     
     // Buttons
     resetButton: document.getElementById('reset-button'),
@@ -178,7 +180,11 @@ const domElements = {
     
     // Refresh warning
     refreshWarning: document.getElementById('refreshWarning'),
-    continueBtn: document.getElementById('continueBtn')
+    continueBtn: document.getElementById('continueBtn'),
+    
+    // Thermocouple and Strain Gauge
+    thermocouple1: document.getElementById('thermocouple-1'),
+    strainGauge1: document.getElementById('strain-gauge-1')
 };
 
 // ===== INITIALIZATION =====
@@ -357,9 +363,6 @@ function initializeGpsTracking() {
     GpsTrackingState.maxHistorySize = 100;
     GpsTrackingState.lastUpdateTime = null;
     
-    // Update GPS status display
-    updateGpsTrackingStatus(false);
-    
     console.log('GPS tracking system initialized');
     addLogEntry('SYSTEM', 'GPS live tracking system initialized (1-second updates)');
 }
@@ -374,9 +377,6 @@ function startGpsTracking() {
     console.log('Starting GPS live tracking...');
     GpsTrackingState.isTracking = true;
     GpsTrackingState.lastUpdateTime = Date.now();
-    
-    // Update status display
-    updateGpsTrackingStatus(true);
     
     // Clear any existing interval
     if (GpsTrackingState.updateInterval) {
@@ -399,28 +399,12 @@ function stopGpsTracking() {
     console.log('Stopping GPS tracking...');
     GpsTrackingState.isTracking = false;
     
-    // Update status display
-    updateGpsTrackingStatus(false);
-    
     if (GpsTrackingState.updateInterval) {
         clearInterval(GpsTrackingState.updateInterval);
         GpsTrackingState.updateInterval = null;
     }
     
     addLogEntry('GPS', 'GPS live tracking stopped');
-}
-
-// Update GPS tracking status display
-function updateGpsTrackingStatus(isActive) {
-    if (domElements.gpsTrackingStatus) {
-        if (isActive) {
-            domElements.gpsTrackingStatus.textContent = 'LIVE TRACKING ACTIVE';
-            domElements.gpsTrackingStatus.setAttribute('data-status', 'nominal');
-        } else {
-            domElements.gpsTrackingStatus.textContent = 'TRACKING INACTIVE';
-            domElements.gpsTrackingStatus.setAttribute('data-status', 'critical');
-        }
-    }
 }
 
 // Update live GPS data every second
@@ -519,31 +503,24 @@ function updateGPSPosition(data) {
 // Update GPS coordinates display
 function updateGpsCoordinatesDisplay(data) {
     if (data.latitude !== undefined && data.longitude !== undefined) {
-        // Update primary telemetry
-        if (domElements.latitude) {
-            domElements.latitude.textContent = formatCoordinate(data.latitude, true);
+        // Update GPS display in main dashboard
+        if (domElements.gpsLatitude) {
+            domElements.gpsLatitude.textContent = formatCoordinate(data.latitude, true);
         }
-        if (domElements.longitude) {
-            domElements.longitude.textContent = formatCoordinate(data.longitude, false);
+        if (domElements.gpsLongitude) {
+            domElements.gpsLongitude.textContent = formatCoordinate(data.longitude, false);
         }
-        if (domElements.altitude) {
-            domElements.altitude.textContent = `${data.altitude?.toFixed(0) || '--'} m`;
+        if (domElements.gpsAltitude) {
+            domElements.gpsAltitude.textContent = `${data.altitude?.toFixed(0) || '--'} m`;
+        }
+        if (domElements.gpsSatellites) {
+            domElements.gpsSatellites.textContent = data.gpsSats || '--';
         }
         
-        // Update tracking panel GPS display
-        if (AppState.activePanel === 'tracking') {
-            if (domElements.gpsLatitude) {
-                domElements.gpsLatitude.textContent = formatCoordinate(data.latitude, true);
-            }
-            if (domElements.gpsLongitude) {
-                domElements.gpsLongitude.textContent = formatCoordinate(data.longitude, false);
-            }
-            if (domElements.gpsAltitude) {
-                domElements.gpsAltitude.textContent = `${data.altitude?.toFixed(0) || '--'} m`;
-            }
-            if (domElements.gpsSatellites) {
-                domElements.gpsSatellites.textContent = data.gpsSats || '--';
-            }
+        // REMOVED: Latitude and longitude updates for performance panel
+        // Only update GPS altitude in performance panel
+        if (domElements.altitude) {
+            domElements.altitude.textContent = `${data.altitude?.toFixed(0) || '--'} m`;
         }
         
         // Log GPS update
@@ -554,17 +531,6 @@ function updateGpsCoordinatesDisplay(data) {
 // Update GPS last update time
 function updateGpsLastUpdateTime() {
     GpsTrackingState.lastUpdateTime = Date.now();
-    
-    if (domElements.gpsLastUpdate) {
-        const now = new Date();
-        const timeString = now.toLocaleTimeString('en-IN', {
-            hour12: false,
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit'
-        });
-        domElements.gpsLastUpdate.textContent = `Last Update: ${timeString}`;
-    }
 }
 
 // Add position to history
@@ -922,8 +888,6 @@ function loadIgnitionDashboardView() {
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- REMOVED: Quick Controls Panel (as requested) -->
                 </div>
             </div>
         </div>
@@ -1083,8 +1047,6 @@ function addIgnitionDashboardListeners() {
             addIgnitionLogEntry("Countdown cancelled");
         });
     }
-    
-    // REMOVED: Quick Control buttons (Abort, Pause, Override)
 }
 
 // Update Fire Enable status
@@ -1698,7 +1660,7 @@ function initializeCharts() {
                     backgroundColor: 'rgba(239, 68, 68, 0.1)',
                     borderWidth: 2,
                     tension: 0.4,
-                    fill: false, // No fill for individual lines
+                    fill: false,
                     pointRadius: 0
                 },
                 { 
@@ -1717,16 +1679,6 @@ function initializeCharts() {
                     borderColor: '#3b82f6',
                     backgroundColor: 'rgba(59, 130, 246, 0.1)',
                     borderWidth: 2,
-                    tension: 0.4,
-                    fill: false,
-                    pointRadius: 0
-                },
-                { 
-                    label: 'Total', 
-                    data: [], 
-                    borderColor: '#8b5cf6',
-                    backgroundColor: 'rgba(139, 92, 246, 0.1)',
-                    borderWidth: 3,
                     tension: 0.4,
                     fill: false,
                     pointRadius: 0
@@ -1752,7 +1704,7 @@ function initializeCharts() {
         }
     });
 
-    // Temperature Chart - Changed from scatter to line chart
+    // Temperature Chart
     const tempCtx = document.getElementById('temperatureChart').getContext('2d');
     temperatureChart = new Chart(tempCtx, {
         type: 'line',
@@ -1843,7 +1795,7 @@ function initializeCharts() {
         }
     });
 
-    // Pressure Chart - Changed to line chart with altitude on x-axis
+    // Pressure Chart
     const pressureCtx = document.getElementById('pressureChart').getContext('2d');
     pressureChart = new Chart(pressureCtx, {
         type: 'line',
@@ -1981,7 +1933,7 @@ function connectToSystem() {
     
     // Simulate connection attempt
     setTimeout(() => {
-        const success = Math.random() > 0.3; // 70% success rate
+        const success = Math.random() > 0.3;
         
         if (success) {
             AppState.isSystemConnected = true;
@@ -2056,13 +2008,12 @@ function initializeSensors() {
         
         // Simulate sensor initialization with delay
         setTimeout(() => {
-            // Check if system is still connected
             if (!AppState.isSystemConnected) {
                 addLogEntry('WARNING', `Sensor initialization interrupted: System disconnected`, 'warning');
                 return;
             }
             
-            const success = Math.random() > 0.3; // 70% success rate for each sensor
+            const success = Math.random() > 0.3;
             
             if (success) {
                 sensor.initialized = true;
@@ -2087,7 +2038,7 @@ function initializeSensors() {
             if (index === sensorNames.length - 1) {
                 checkAllSensorsInitialized();
             }
-        }, index * 1500); // 1.5 seconds between each sensor initialization
+        }, index * 1500);
     });
 }
 
@@ -2123,7 +2074,7 @@ function establishCommunication() {
     
     // Simulate communication establishment
     setTimeout(() => {
-        const success = Math.random() > 0.2; // 80% success rate
+        const success = Math.random() > 0.2;
         
         if (success) {
             AppState.communicationEstablished = true;
@@ -2156,13 +2107,10 @@ function establishCommunication() {
 }
 
 function updateDisplayStatus(message) {
-    // This function can be used to update UI with sensor status
     console.log('Status:', message);
 }
 
 function enableTelemetryReception() {
-    // This function would enable the actual telemetry reception
-    // In a real system, this would start listening on a serial port or socket
     addLogEntry('SYSTEM', 'Telemetry reception enabled', 'success');
 }
 
@@ -2297,7 +2245,19 @@ function animate3DRocket() {
     
     // Update rocket stats
     if (AppState.rocket && domElements.rocketOrientation) {
+        // Calculate Euler angles from quaternion
+        const euler = new THREE.Euler();
+        euler.setFromQuaternion(AppState.rocket.quaternion);
+        
+        // Convert to degrees
+        const rotationX = THREE.MathUtils.radToDeg(euler.x).toFixed(1);
+        const rotationY = THREE.MathUtils.radToDeg(euler.y).toFixed(1);
+        const rotationZ = THREE.MathUtils.radToDeg(euler.z).toFixed(1);
+        
         domElements.rocketOrientation.textContent = 'Stable';
+        if (domElements.rocketRotationX) domElements.rocketRotationX.textContent = `${rotationX}°`;
+        if (domElements.rocketRotationY) domElements.rocketRotationY.textContent = `${rotationY}°`;
+        if (domElements.rocketRotationZ) domElements.rocketRotationZ.textContent = `${rotationZ}°`;
     }
     
     AppState.renderer.render(AppState.scene, AppState.camera);
@@ -2400,16 +2360,10 @@ function openPanel(panelId) {
         closePanel(AppState.activePanel);
     }
     
-    // Hide primary telemetry section
-    const primaryTelemetry = document.getElementById('primary-telemetry');
-    if (primaryTelemetry) {
-        primaryTelemetry.style.display = 'none';
-    }
-    
-    // Hide data log section
-    const dataLogSection = document.getElementById('data-log-section');
-    if (dataLogSection) {
-        dataLogSection.style.display = 'none';
+    // Hide main dashboard
+    const mainDashboard = document.querySelector('.main-dashboard');
+    if (mainDashboard) {
+        mainDashboard.style.display = 'none';
     }
     
     // Show selected panel
@@ -2418,22 +2372,6 @@ function openPanel(panelId) {
         panel.classList.add('active');
         panel.style.display = 'block';
         AppState.activePanel = panelId;
-        
-        // Initialize specific panel features
-        switch (panelId) {
-            case 'visualization':
-                setTimeout(() => {
-                    initialize3DRocket();
-                }, 100);
-                break;
-            case 'tracking':
-                if (typeof initMap === 'function') {
-                    setTimeout(() => {
-                        initMap();
-                    }, 100);
-                }
-                break;
-        }
         
         addLogEntry('SYSTEM', `Opened ${panelId.replace('-', ' ').toUpperCase()} panel`);
     } else {
@@ -2450,15 +2388,10 @@ function closePanel(panelId) {
         AppState.activePanel = null;
     }
     
-    // Show main page elements
-    const primaryTelemetry = document.getElementById('primary-telemetry');
-    if (primaryTelemetry) {
-        primaryTelemetry.style.display = 'block';
-    }
-    
-    const dataLogSection = document.getElementById('data-log-section');
-    if (dataLogSection) {
-        dataLogSection.style.display = 'block';
+    // Show main dashboard
+    const mainDashboard = document.querySelector('.main-dashboard');
+    if (mainDashboard) {
+        mainDashboard.style.display = 'grid';
     }
 }
 
@@ -2588,7 +2521,7 @@ function processTelemetryData(data) {
             return;
         }
         
-        // Check if sensors are initialized
+        // Check if sensors are ready
         if (!areSensorsReadyForTelemetry()) {
             addLogEntry('WARNING', 'Cannot process telemetry: Sensors not fully initialized', 'warning');
             return;
@@ -2621,10 +2554,6 @@ function processTelemetryData(data) {
             domElements.dataBuffer.textContent = AppState.telemetryData.length;
         }
         
-        // Note: GPS data is updated automatically by the 1-second interval in updateLiveGpsData()
-        
-        // Note: Firebase telemetry is saved automatically by the 5-second interval
-        
     } catch (error) {
         console.error('Error processing telemetry:', error);
         addLogEntry('ERROR', `Telemetry processing error: ${error.message}`, 'error');
@@ -2649,25 +2578,29 @@ function isValidTelemetry(data) {
 }
 
 function updateTelemetryDisplay(data) {
-    // Only update if we have real data from sensors
-    updateElement(data.latitude, domElements.latitude, formatCoordinate(data.latitude, true));
-    updateElement(data.longitude, domElements.longitude, formatCoordinate(data.longitude, false));
+    // Update Flight Data (GPS Altitude and Downrange)
     updateElement(data.altitude, domElements.altitude, `${data.altitude?.toFixed(0) || '--'} m`);
     updateElement(data.downrange, domElements.downrange, `${((data.downrange || 0) / 1000).toFixed(1) || '--'} km`);
     
+    // Update speed displays
+    updateElement(data.verticalSpeed, domElements.verticalSpeed, `${data.verticalSpeed?.toFixed(1) || '--'} m/s`);
+    updateElement(data.horizontalSpeed, domElements.horizontalSpeed, `${data.horizontalSpeed?.toFixed(1) || '--'} m/s`);
+    
+    // Update Acceleration
     updateElement(data.accelX, domElements.accelX, `${data.accelX?.toFixed(2) || '--'} G`);
     updateElement(data.accelY, domElements.accelY, `${data.accelY?.toFixed(2) || '--'} G`);
     updateElement(data.accelZ, domElements.accelZ, `${data.accelZ?.toFixed(2) || '--'} G`);
     
-    // REMOVED: Total acceleration calculation formula
+    // REMOVED: Total acceleration calculation
     if (domElements.totalAccel) domElements.totalAccel.textContent = '-- G';
     
+    // Update Orientation
     updateElement(data.roll, domElements.roll, `${data.roll?.toFixed(1) || '--'}°`);
     updateElement(data.pitch, domElements.pitch, `${data.pitch?.toFixed(1) || '--'}°`);
     updateElement(data.yaw, domElements.yaw, `${data.yaw?.toFixed(1) || '--'}°`);
     updateElement(data.angularRate, domElements.angularRate, `${data.angularRate?.toFixed(1) || '--'}°/s`);
     
-    // System status
+    // Update System Status
     if (data.ignition !== undefined && domElements.ignitionStatus) {
         const isIgnited = data.ignition === true || data.ignition === 1;
         AppState.isIgnited = isIgnited;
@@ -2684,11 +2617,16 @@ function updateTelemetryDisplay(data) {
         }
     }
     
+    // Update GPS and Temperature
     updateElement(data.gpsSats, domElements.gpsSats, data.gpsSats || '--');
     updateElement(data.temperature, domElements.temperature, `${data.temperature?.toFixed(1) || '--'} °C`);
     
+    // Update Thermocouple and Strain Gauge
+    updateElement(data.thermocouple1, domElements.thermocouple1, `${data.thermocouple1?.toFixed(1) || '--'} °C`);
+    updateElement(data.strainGauge1, domElements.strainGauge1, `${data.strainGauge1?.toFixed(0) || '--'} µε`);
+    
     // Update additional displays for active panels
-    if (AppState.activePanel === 'trajectory' || AppState.activePanel === 'tracking') {
+    if (AppState.activePanel === 'trajectory') {
         updatePanelSpecificData(data);
     }
 }
@@ -2713,8 +2651,6 @@ function updatePanelSpecificData(data) {
             domElements.descentAltitude.textContent = `${data.altitude?.toFixed(0) || '--'} m`;
         }
     }
-    
-    // Note: Tracking panel GPS data is updated automatically by updateLiveGpsData()
 }
 
 function updateElement(value, element, formattedValue) {
@@ -2793,8 +2729,6 @@ function updateCharts(data) {
             });
         }
         
-        // REMOVED: Total acceleration calculation formula
-        
         // Add temperature data point
         if (data.temperature !== undefined) {
             AppState.chartData.temperature.push({
@@ -2847,7 +2781,6 @@ function updateChartData() {
         accelerationChart.data.datasets[0].data = AppState.chartData.accelX.slice(-100);
         accelerationChart.data.datasets[1].data = AppState.chartData.accelY.slice(-100);
         accelerationChart.data.datasets[2].data = AppState.chartData.accelZ.slice(-100);
-        // REMOVED: Total acceleration dataset update
         accelerationChart.update('none');
     }
     
@@ -2913,11 +2846,11 @@ function downloadPrimaryTelemetry() {
         
         csvContent += "CATEGORY,PARAMETER,VALUE\n";
         
-        // Position Data
-        csvContent += "Position Data,Latitude," + telemetryData.positionData.latitude + "\n";
-        csvContent += "Position Data,Longitude," + telemetryData.positionData.longitude + "\n";
-        csvContent += "Position Data,Altitude," + telemetryData.positionData.altitude + "\n";
-        csvContent += "Position Data,Downrange," + telemetryData.positionData.downrange + "\n";
+        // Flight Data (GPS Altitude and Downrange only)
+        csvContent += "Flight Data,GPS Altitude," + telemetryData.flightData.gpsAltitude + "\n";
+        csvContent += "Flight Data,Downrange," + telemetryData.flightData.downrange + "\n";
+        csvContent += "Flight Data,Vertical Speed," + telemetryData.flightData.verticalSpeed + "\n";
+        csvContent += "Flight Data,Horizontal Speed," + telemetryData.flightData.horizontalSpeed + "\n";
         
         // Acceleration 
         csvContent += "Acceleration,Accel X," + telemetryData.accelerationVectors.accelX + "\n";
@@ -2951,7 +2884,7 @@ function downloadPrimaryTelemetry() {
         if (hasRealData) {
             // Add latest telemetry data points
             csvContent += "\n=== LATEST TELEMETRY DATA POINTS ===\n";
-            csvContent += "Timestamp,Latitude,Longitude,Altitude(m),AccelX(G),AccelY(G),AccelZ(G),Temperature(°C)\n";
+            csvContent += "Timestamp,GPS Altitude(m),Downrange(km),AccelX(G),AccelY(G),AccelZ(G),Temperature(°C)\n";
             
             // Get last 10 data points or all if less than 10
             const dataPoints = AppState.telemetryData.slice(-10);
@@ -2959,9 +2892,8 @@ function downloadPrimaryTelemetry() {
             dataPoints.forEach((data, index) => {
                 const timestamp = new Date(data.timestamp).toLocaleTimeString();
                 csvContent += `${timestamp},`;
-                csvContent += `${data.latitude?.toFixed(6) || '--'},`;
-                csvContent += `${data.longitude?.toFixed(6) || '--'},`;
                 csvContent += `${data.altitude?.toFixed(2) || '--'},`;
+                csvContent += `${((data.downrange || 0) / 1000).toFixed(3) || '--'},`;
                 csvContent += `${data.accelX?.toFixed(3) || '--'},`;
                 csvContent += `${data.accelY?.toFixed(3) || '--'},`;
                 csvContent += `${data.accelZ?.toFixed(3) || '--'},`;
@@ -2998,11 +2930,11 @@ function getCurrentTelemetryData() {
     const data = {
         timestamp: new Date().toISOString(),
         displayTime: new Date().toLocaleString(),
-        positionData: {
-            latitude: domElements.latitude ? domElements.latitude.textContent : '--.--° N',
-            longitude: domElements.longitude ? domElements.longitude.textContent : '--.--° E',
-            altitude: domElements.altitude ? domElements.altitude.textContent : '-- m',
-            downrange: domElements.downrange ? domElements.downrange.textContent : '-- m'
+        flightData: {
+            gpsAltitude: domElements.altitude ? domElements.altitude.textContent : '-- m',
+            downrange: domElements.downrange ? domElements.downrange.textContent : '-- km',
+            verticalSpeed: domElements.verticalSpeed ? domElements.verticalSpeed.textContent : '-- m/s',
+            horizontalSpeed: domElements.horizontalSpeed ? domElements.horizontalSpeed.textContent : '-- m/s'
         },
         accelerationVectors: {
             accelX: domElements.accelX ? domElements.accelX.textContent : '-- G',
@@ -3047,14 +2979,13 @@ function downloadChartCSV(chartType) {
         
         switch(chartType) {
             case 'acceleration':
-                headers = 'Time (s),Accel X (G),Accel Y (G),Accel Z (G),Total Accel (G)\n';
+                headers = 'Time (s),Accel X (G),Accel Y (G),Accel Z (G)\n';
                 for (let i = 0; i < AppState.chartData.time.length; i++) {
                     csvRows.push([
                         AppState.chartData.time[i].toFixed(2),
                         (AppState.chartData.accelX[i] || 0).toFixed(3),
                         (AppState.chartData.accelY[i] || 0).toFixed(3),
-                        (AppState.chartData.accelZ[i] || 0).toFixed(3),
-                        (AppState.chartData.totalAccel[i] || 0).toFixed(3)
+                        (AppState.chartData.accelZ[i] || 0).toFixed(3)
                     ].join(','));
                 }
                 break;
@@ -3155,10 +3086,10 @@ function exportDataCSV() {
     
     try {
         const headers = [
-            'Timestamp', 'Mission Time (s)', 'Latitude', 'Longitude', 'Altitude (m)',
+            'Timestamp', 'Mission Time (s)', 'GPS Altitude (m)', 'Downrange (km)',
             'Accel X (G)', 'Accel Y (G)', 'Accel Z (G)', 'Roll (°)', 'Pitch (°)', 'Yaw (°)',
             'Angular Rate (°/s)', 'Temperature (°C)', 'GPS Satellites', 'Ignition',
-            'Communication Status', 'Downrange (m)', 'Pressure (hPa)'
+            'Communication Status', 'Vertical Speed (m/s)', 'Horizontal Speed (m/s)', 'Pressure (hPa)'
         ].join(',');
         
         const csvRows = [headers];
@@ -3167,9 +3098,8 @@ function exportDataCSV() {
             const row = [
                 new Date(data.timestamp).toISOString(),
                 (data.missionTime || 0).toFixed(2),
-                (data.latitude || 0).toFixed(6),
-                (data.longitude || 0).toFixed(6),
                 (data.altitude || 0).toFixed(2),
+                ((data.downrange || 0) / 1000).toFixed(3),
                 (data.accelX || 0).toFixed(3),
                 (data.accelY || 0).toFixed(3),
                 (data.accelZ || 0).toFixed(3),
@@ -3181,7 +3111,8 @@ function exportDataCSV() {
                 data.gpsSats || 0,
                 data.ignition ? 'YES' : 'NO',
                 data.commStatus ? 'OK' : 'FAIL',
-                (data.downrange || 0).toFixed(2),
+                (data.verticalSpeed || 0).toFixed(2),
+                (data.horizontalSpeed || 0).toFixed(2),
                 (data.pressure || 1013).toFixed(2)
             ];
             csvRows.push(row.join(','));
@@ -3214,7 +3145,7 @@ function exportGraphsCSV() {
     try {
         const headers = [
             'Time (s)', 'Altitude (m)', 'Pressure (hPa)', 'Accel X (G)', 'Accel Y (G)',
-            'Accel Z (G)', 'Total Acceleration (G)', 'Temperature (°C)'
+            'Accel Z (G)', 'Temperature (°C)'
         ].join(',');
         
         const csvRows = [headers];
@@ -3237,7 +3168,6 @@ function exportGraphsCSV() {
                 (AppState.chartData.accelX[i] || 0).toFixed(3),
                 (AppState.chartData.accelY[i] || 0).toFixed(3),
                 (AppState.chartData.accelZ[i] || 0).toFixed(3),
-                (AppState.chartData.totalAccel[i] || 0).toFixed(3),
                 (tempPoint.y || 0).toFixed(2)
             ];
             csvRows.push(row.join(','));
@@ -3409,17 +3339,11 @@ function closeAllPanels() {
         closePanel(AppState.activePanel);
     }
     
-    // Show all main page elements
-    const elementsToShow = [
-        document.getElementById('primary-telemetry'),
-        document.getElementById('data-log-section')
-    ];
-    
-    elementsToShow.forEach(element => {
-        if (element) {
-            element.style.display = 'block';
-        }
-    });
+    // Show main dashboard
+    const mainDashboard = document.querySelector('.main-dashboard');
+    if (mainDashboard) {
+        mainDashboard.style.display = 'grid';
+    }
 }
 
 function resetAllDisplays() {
@@ -3428,10 +3352,10 @@ function resetAllDisplays() {
     // Update all elements with reset values
     const elementsToReset = [
         { element: domElements.dataBuffer, value: '0' },
-        { element: domElements.latitude, value: `${resetValue}°` },
-        { element: domElements.longitude, value: `${resetValue}°` },
         { element: domElements.altitude, value: `${resetValue} m` },
         { element: domElements.downrange, value: `${resetValue} km` },
+        { element: domElements.verticalSpeed, value: `${resetValue} m/s` },
+        { element: domElements.horizontalSpeed, value: `${resetValue} m/s` },
         { element: domElements.accelX, value: `${resetValue} G` },
         { element: domElements.accelY, value: `${resetValue} G` },
         { element: domElements.accelZ, value: `${resetValue} G` },
@@ -3443,7 +3367,12 @@ function resetAllDisplays() {
         { element: domElements.ignitionStatus, value: 'NOT IGNITED', status: 'critical' },
         { element: domElements.gpsSats, value: resetValue },
         { element: domElements.temperature, value: `${resetValue} °C` },
+        { element: domElements.thermocouple1, value: `${resetValue} °C` },
+        { element: domElements.strainGauge1, value: `${resetValue} µε` },
         { element: domElements.rocketOrientation, value: 'Stable' },
+        { element: domElements.rocketRotationX, value: '0°' },
+        { element: domElements.rocketRotationY, value: '0°' },
+        { element: domElements.rocketRotationZ, value: '0°' },
         { element: domElements.gpsLatitude, value: `${resetValue}°` },
         { element: domElements.gpsLongitude, value: `${resetValue}°` },
         { element: domElements.gpsAltitude, value: `${resetValue} m` },
@@ -3454,9 +3383,7 @@ function resetAllDisplays() {
         { element: domElements.trajCurrentAltitude, value: `${resetValue} m` },
         { element: domElements.descentAltitude, value: `${resetValue} m` },
         { element: domElements.ignitionTime, value: '--:--' },
-        { element: domElements.maxqAlt, value: `${resetValue} m` },
-        { element: domElements.gpsTrackingStatus, value: 'TRACKING INACTIVE', status: 'critical' },
-        { element: domElements.gpsLastUpdate, value: 'Last Update: --:--:--' }
+        { element: domElements.maxqAlt, value: `${resetValue} m` }
     ];
     
     elementsToReset.forEach(item => {
